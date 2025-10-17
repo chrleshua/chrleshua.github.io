@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Formula1 2024 Race Visualizations</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <h1 style="font-family: 'Formula1-Bold', sans-serif;">F1 2024 Race Analysis</h1>
+    </header>
+        <main>
+        <div class="controls">
+            <label for="raceSelect">Select Race:</label>
+            <select id="raceSelect"></select>
+        </div>
+        <h2> Grid to Final Positions</h2>
+        <svg id="grid-svg" width="1000" height="600"></svg>
+        <h2> Pit Stops </h2>
+        <svg id="pitlane-svg" width="1000" height="150"></svg>
+        <div id="tooltip" class="tooltip hidden"></div>
+    </main>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
