@@ -7,18 +7,78 @@
 </head>
 <body>
     <header>
-        <h1 style="font-family: 'Formula1-Bold', sans-serif;">F1 2024 Race Analysis</h1>
-    </header>
+        <h1 style="font-family: 'Formula1-Bold', sans-serif;">
+            <span style="color: red;">FORMULA 1</span> 2024 Race Analysis
+          </h1>
         <main>
-        <div class="controls">
-            <label for="raceSelect">Select Race:</label>
-            <select id="raceSelect"></select>
-        </div>
-        <h2> Grid to Final Positions</h2>
-        <svg id="grid-svg" width="1000" height="600"></svg>
-        <h2> Pit Stops </h2>
-        <svg id="pitlane-svg" width="1000" height="150"></svg>
-        <div id="tooltip" class="tooltip hidden"></div>
+            <h2 style="text-align: center;"> Explore Race Statistics </h2>
+            <h3 style="text-align: center; font-style: italic;"> Select a race from 2024 and analyze the results. </h3>
+
+
+            <div class="controls">
+                <label for="raceSelect">Select Race:</label>
+                <select id="raceSelect"></select>
+            </div>
+
+
+            <section class="features mt-8 flex justify-center gap-8 flex-wrap">
+                <!-- Podium -->
+                <div class="feature-card" id="btn-podium">
+                  <h3 class="text-xl font-bold">Podium</h3>
+                  <p class="text-sm text-gray-600 mt-2">
+                    Look at the overall podium for 2024. 
+                  </p>
+                </div>
+              
+                <!-- Grid -->
+                <div class="feature-card" id="btn-grid">
+                  <h3 class="text-xl font-bold">Grid</h3>
+                  <p class="text-sm text-gray-600 mt-2">
+                    Compare starting grid positions to final race results for each 2024 race.
+                  </p>
+                </div>
+              
+                <!-- Pit Stop Strategy -->
+                <div class="feature-card" id="btn-pitstop">
+                  <h3 class="text-xl font-bold">Pit Stop Strategy</h3>
+                  <p class="text-sm text-gray-600 mt-2">
+                    Analyze team pit stop strategy and timing across the race.
+                  </p>
+                </div>
+              </section>
+
+            <section id="podium-section" class="mt-20">
+            <div class="podium-header">
+                <h2>🏆 Championship Overview</h2>
+                <div class="podium-buttons">
+                <button id="show-constructors" class="pill active">Constructors</button>
+                <button id="show-drivers" class="pill">Drivers</button>
+                </div>
+            </div>
+            
+                <!-- Constructors podium (top 5) -->
+                <div id="constructors-view" class="podium-view">
+                    <svg id="constructors-svg" width="1000" height="360"></svg>
+                </div>
+                
+                <!-- Drivers championship view -->
+                <div id="drivers-view" class="podium-view hidden">
+                    <svg id="drivers-svg" width="1000" height="800"></svg>
+                </div>
+            </section>
+            
+            <section id="grid-section" class="mt-20">
+                <h2 class="text-2xl font-bold mb-4"> Grid to Finish Positions</h2>
+                <svg id="grid-svg" width="1000" height="600"></svg>
+            </section>
+        
+        
+            <section id="pitstop-section" class="mt-20">
+                <h2 class="text-2xl font-bold mb-4"> Pit Stop Visualization</h2>
+                <svg id="pitlane-svg" width="1000" height="150"></svg>
+                <div id="tooltip" class="tooltip hidden"></div>
+            </section>
+        
     </main>
 
     <script src="https://d3js.org/d3.v7.min.js"></script>

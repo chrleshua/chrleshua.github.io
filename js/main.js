@@ -3,6 +3,19 @@ const width = +svg.attr("width") - 150;
 const height = +svg.attr("height") - 100;
 const margin = { top: 50, right: 50, bottom: 50, left: 150 };
 
+const teamColors = {
+    "McLaren": "#FF8700",
+    "Mercedes": "#00D2BE",
+    "Red Bull": "#1E41FF",
+    "Ferrari": "#DC0000",
+    "Aston Martin": "#006F62",
+    "Alpine": "#0090FF",
+    "Williams": "#005AFF",
+    "RB": "#6692FF",
+    "Kick Sauber": "#00E701",
+    "Haas": "#FFFFFF",
+  };
+
 const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 const tooltip = d3.select(".tooltip");
 
@@ -202,3 +215,15 @@ function updateRace(raceName, skipAnimation = false) {
         .attr("fill", "#fff")
         .style("font-weight", "bold");
 }
+
+document.querySelectorAll(".feature-card").forEach(card => {
+    card.addEventListener("click", () => {
+      const targetId = card.id.replace("btn-", "") + "-section";
+      const target = document.getElementById(targetId);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  });
+
+  
