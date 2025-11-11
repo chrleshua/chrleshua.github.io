@@ -1,282 +1,369 @@
+/* -------------------------- Fonts -------------------------- */
+
 /* Bold */
 @font-face {
-    font-family: 'Formula1-Bold';
-    src: url('../fonts/Formula1-Bold_web_0.ttf') format('truetype');
-    font-weight: bold;
-    font-style: normal;
+  font-family: 'Formula1-Bold';
+  src: url('../fonts/Formula1-Bold_web_0.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
 }
 
 /* Regular */
 @font-face {
-    font-family: 'Formula1-Regular';
-    src: url('../fonts/Formula1-Regular_web_0.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
+  font-family: 'Formula1-Regular';
+  src: url('../fonts/Formula1-Regular_web_0.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
 }
 
 /* Wide */
 @font-face {
-    font-family: 'Formula1-Wide';
-    src: url('../fonts/Formula1-Wide_web_0.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
+  font-family: 'Formula1-Wide';
+  src: url('../fonts/Formula1-Wide_web_0.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
 }
 
+/* -------------------------- Body & Headings -------------------------- */
+
 body {
-    font-family: 'Formula1-Regular', Arial, sans-serif;
-    background-color: #000;
-    color: #fff;
-    margin: 20px;
+  font-family: 'Formula1-Regular', Arial, sans-serif;
+  background-color: #000;
+  color: #fff;
+  margin: 20px;
 }
 
 h1 {
-    font-family: 'Formula1-Bold', Arial, sans-serif;
-    text-align: center;
-    color: #fff;
-    font-size: 3em;
+  font-family: 'Formula1-Bold', Arial, sans-serif;
+  text-align: center;
+  color: #fff;
+  font-size: 3em;
 }
 
+/* -------------------------- Controls -------------------------- */
+
 .controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 1rem;
-    margin: 2rem auto;
-    font-weight: bold;
-    color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin: 2rem auto;
+  font-weight: bold;
+  color: white;
 }
 
 select, button {
-    padding: 5px 10px;
-    font-size: 14px;
-    background-color: #111;
-    color: #fff;
-    border: 1px solid #555;
-    border-radius: 5px;
-    cursor: pointer;
+  padding: 5px 10px;
+  font-size: 14px;
+  background-color: #111;
+  color: #fff;
+  border: 1px solid #555;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
 button:hover, select:hover {
-    border-color: #ff0000;
+  border-color: #ff0000;
 }
+
+/* Toggle Button */
+#toggleView {
+  margin-left: 1rem;
+  border: 2px solid #e10600;
+  background-color: #000;
+  color: #fff;
+  font-weight: bold;
+}
+#toggleView:hover {
+  background-color: #111;
+  border-color: #FFD700;
+}
+
+/* -------------------------- SVG Containers -------------------------- */
 
 svg {
-    display: block;
-    margin: auto;
-    background-color: #111;
-    border-radius: 10px;
+  display: block;
+  margin: auto;
+  background-color: #111;
+  border-radius: 10px;
 }
+
+#drivers-svg { 
+  width: 1000px; height: 1000px;
+  background: transparent; }
+
+#constructors-svg { width: 1200px; height: 480px; overflow: visible; }
+
+/* -------------------------- Tooltip -------------------------- */
 
 .tooltip {
-    position: absolute;
-    background: rgba(0,0,0,0.8);
-    color: #fff;
-    padding: 8px;
-    border-radius: 5px;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.2s;
+  position: absolute;
+  background: rgba(0,0,0,0.9);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  pointer-events: none;
+  font-family: 'Formula1-Regular';
+  font-size: 13px;
+  z-index: 1000;
 }
-.tooltip.hidden { opacity: 0; }
+
+.tooltip.hidden, #podium-tooltip.hidden { opacity: 0; }
+
+/* -------------------------- Podium Section -------------------------- */
+
+.pill {
+  margin-left: 1rem;
+  border: 2px solid #e10600;
+  background-color: #000;
+  color: #fff;
+  font-weight: bold;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pill:hover {
+  background-color: #111;
+  border-color: #FFD700;
+}
+
+.pill.active {
+  background-color: #e10600;
+  border-color: #e10600;
+}
+
+#podium-section {
+  padding: 2rem;
+  background: linear-gradient(180deg, #0b0b0b 0%, #070707 100%);
+  border-top: 2px solid #1a1a1a;
+}
+
+.podium-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:1rem;
+  margin-bottom:1rem;
+}
+
+.podium-header h2 { color:#fff; font-family:'Formula1-Bold'; }
+
+.podium-buttons .pill {
+  background: #000;
+  font-family: 'Formula1-Regular';
+  color: #fff;
+  border: 2px solid #e10600;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  margin-left:0.5rem;
+}
+.podium-buttons .pill.active {
+  box-shadow: 0 6px 18px rgba(225,16,0,0.45);
+  transform: translateY(-4px);
+}
+
+/* Podium layout */
+
+/* -------------------------- Podium Bars -------------------------- */
+
+.podium-view {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 10px 20px;
+}
+
+.podium-view svg {
+  width: 1000;
+  height: 1000px;
+  border-radius: 10px;
+  background: #111;
+  border: 2px solid #e10600;
+  box-shadow: 0 10px 30px rgba(225,16,0,0.12);
+}
+
+.hidden {
+  display: none !important;
+}
+
+
+/* layout for constructors area: svg + info side-by-side with equal height */
+#constructors-view {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 10px 20px;
+}
+
+/* Make both svg containers take approximately equal visual space */
+#constructors-svg, #constructors-info {
+  width: calc(50% - 10px);
+  height: 420px; /* consistent height */
+  border-radius: 10px;
+  background: #111; /* dark background */
+}
+
+/* Always show red outline + shadow for podium container */
+#constructors-svg {
+  border: 2px solid #e10600;
+  box-shadow: 0 10px 30px rgba(225,16,0,0.12);
+}
+
+/* Info box default is neutral; will gain border on hover via JS */
+#constructors-info {
+  background: #0e0e0e;
+  border: none;
+  box-shadow: none;
+  padding: 8px;
+}
+
+/* podium rectangles */
+.podium-bar rect {
+  transition: width 0.1s ease-in-out, height 0.1s ease-in-out;
+  will-change: width, height, transform;
+}
+
+/* place text and team labels */
+.podium-place {
+  font-family: 'Formula1-Bold';
+  font-size: 18px;
+  pointer-events: none;
+}
+
+.team-name {
+  font-family: 'Formula1-Bold';
+  font-size: 16px;
+  pointer-events: none;
+}
+
+.team-points {
+  font-family: 'Formula1-Regular';
+  font-size: 14px;
+  pointer-events: none;
+}
+
+/* Info panel text sizes (bigger so it fills container) */
+#constructors-info text {
+  font-family: 'Formula1-Regular';
+  fill: #fff;
+}
+#constructors-info .title {
+  font-size: 22px;
+}
+#constructors-info .total {
+  font-size: 18px;
+}
+#constructors-info .driver {
+  font-size: 17px;
+  fill: #ddd;
+}
+
+/* Remove default SVG outlines on focused elements */
+svg:focus { outline: none; }
+
+/* -------------------------- Drivers Bar Chart -------------------------- */
+
+.driver-bar {
+  fill: #2b2b2b;
+  stroke: #333;
+  outline: red;
+  box-shadow: red;
+}
+
+.driver-bar.highlight { fill: #444; }
+
+.points-text {
+  fill: #fff;
+  font-size: 12px;
+  font-family: 'Formula1-Bold';
+  dominant-baseline: middle;
+}
+
+/* Car icons for drivers */
+.car {
+  width: 30px;
+  height: 20px;
+  rx: 3;
+  cursor: pointer;
+  stroke: #000;
+  stroke-width: 1;
+  transform-origin: left center;
+}
+
+/* -------------------------- Feature Cards -------------------------- */
 
 .features {
-    display: flex;
-    justify-content: center;
-    align-items: stretch;
-    gap: 2rem;
-    flex-wrap: nowrap;
-  }
-  
-  .feature-card {
-    background: #000;
-    color: #fff;
-    border: 2px solid red;
-    border-radius: 1rem;
-    padding: 1.5rem;
-    width: 280px;
-    text-align: center;
-    box-shadow: 0 0 10px rgba(255, 0, 0, 0.1);
-    transition: all 0.3s ease;
-    cursor: pointer;
-  }
-  
-  .feature-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 0 40px rgba(255, 0, 0, 0.6);
-  }
-  
-  .feature-card img.icon {
-    width: 60px;
-    height: 60px;
-    margin-bottom: 1rem;
-    object-fit: contain;
-  }
-  
-  .feature-card h3 {
-    font-family: 'Formula1-Bold', sans-serif;
-    font-size: 1.3rem;
-    color: white;
-    margin-bottom: 0.5rem;
-  }
-  
-  .feature-card p {
-    font-size: 0.9rem;
-    color: #ccc;
-    margin: 0;
-  }
-  
-  section h2 {
-    font-family: 'Formula1-Bold', sans-serif;
-    font-size: 1.6rem;
-    color: white;
-  }
-
-.line {
-    stroke: #ff0000;
-    stroke-width: 2px;
-    opacity: 0.6;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 2rem;
+  flex-wrap: nowrap;
 }
 
-.top10 {
-    stroke: #ff0000;
-    stroke-width: 2px;
+.feature-card {
+  background: #000;
+  color: #fff;
+  border: 2px solid red;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  width: 280px;
+  text-align: center;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
 }
+
+.feature-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 0 40px rgba(255, 0, 0, 0.6);
+}
+
+.feature-card img.icon {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 1rem;
+  object-fit: contain;
+}
+
+.feature-card h3 {
+  font-family: 'Formula1-Bold', sans-serif;
+  font-size: 1.3rem;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.feature-card p {
+  font-size: 0.9rem;
+  color: #ccc;
+  margin: 0;
+}
+
+/* -------------------------- Scroll Container -------------------------- */
 
 #scroll-container {
-    overflow-x: scroll;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE 10+ */
-  }
-  
-  #scroll-container::-webkit-scrollbar {
-    display: none; /* Chrome, Safari */
-  }
+  overflow-x: scroll;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
 
-/* Podium section */
-#podium-section {
-    padding: 2rem;
-    background: linear-gradient(180deg, #0b0b0b 0%, #070707 100%);
-    border-top: 2px solid #1a1a1a;
-  }
-  
-  .podium-header {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:1rem;
-    margin-bottom:1rem;
-  }
-  
-  .podium-header h2 { color:#fff; font-family:'Formula1-Bold'; }
-  
-  .podium-buttons .pill {
-    background: #000;
-    color: #fff;
-    border: 2px solid #e10600;
-    padding: 0.5rem 1rem;
-    border-radius: 999px;
-    cursor: pointer;
-    margin-left:0.5rem;
-  }
-  .podium-buttons .pill.active {
-    box-shadow: 0 6px 18px rgba(225,16,0,0.45);
-    transform: translateY(-4px);
-  }
-  
-  /* container for two views */
-  .podium-view { margin-top: 1rem; }
-  .podium-view.hidden { display: none; }
-  
-  /* Constructors podium */
-  .podium-root {
-    width:100%;
-    display:flex;
-    justify-content:center;
-    align-items:flex-end;
-    gap:2rem;
-  }
-  
-  .podium-bar {
-    width:140px;
-    border-radius:6px;
-    display:flex;
-    flex-direction:column;
-    justify-content:flex-end;
-    align-items:center;
-    position:relative;
-    cursor:pointer;
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-  }
-  
-  .podium-bar:hover { transform: translateY(-8px); box-shadow: 0 10px 30px rgba(225,16,0,0.35); }
-  
-  .podium-label-top {
-    position:absolute;
-    top:-28px;
-    font-weight:700;
-    font-family:'Formula1-Bold';
-    text-align:center;
-  }
-  
-  /* colors for podium positions */
-  .podium-first { background: #FFD700; } /* gold */
-  .podium-second { background: #C0C0C0; } /* silver */
-  .podium-third { background: #CD7F32; } /* bronze */
-  .podium-outline { background: transparent; border: 2px solid #e10600; color: #fff; }
-  
-  /* place number centered inside bar */
-  .podium-place {
-    color: #000;
-    font-size: 1.2rem;
-    font-weight: 800;
-    padding: 0.6rem;
-    border-radius: 4px;
-    margin-bottom: 0.5rem;
-  }
-  
-  /* team name above bar uses team color */
-  .team-name {
-    margin-top: 8px;
-    font-weight:700;
-    font-family:'Formula1-Bold';
-  }
-  
-  /* Drivers view */
-  #drivers-svg { background: transparent; }
-  
-  .driver-bar {
-    fill: #2b2b2b;
-    stroke: #333;
-  }
-  
-  .driver-bar.highlight { fill: #444; }
-  
-  .points-text {
-    fill: #fff;
-    font-size: 12px;
-    font-family: 'Formula1-Bold';
-    dominant-baseline: middle;
-  }
-  
-  /* car marker */
-  .car {
-    width: 28px;
-    height: 14px;
-    rx: 3;
-    cursor: pointer;
-    stroke: #000;
-    stroke-width: 1;
-  }
-  
-  /* tooltip adjustments */
-  .tooltip {
-    pointer-events: none;
-    z-index: 20;
-    background: rgba(0,0,0,0.9);
-    border: 1px solid #222;
-    color: #fff;
-    padding: 8px;
-    border-radius: 6px;
-    font-size: 13px;
-  }
-  
+#scroll-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
+/* -------------------------- Lines -------------------------- */
+
+.line, .top10 {
+  stroke: #ff0000;
+  stroke-width: 2px;
+  opacity: 0.6;
+}
+
+/* -------------------------- Podium Views -------------------------- */
+
+.podium-view { margin-top: 1rem; }
+.podium-view.hidden { display: none; }
