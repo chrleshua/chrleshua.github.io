@@ -2,49 +2,52 @@
 
 export function racecarSVG(teamColor) {
   return `
-      <svg class="racecar-svg" viewBox="0 0 400 800" xmlns="http://www.w3.org/2000/svg">
-  <!-- Front Wing -->
-  <rect x="50" y="50" width="300" height="20" fill="${teamColor}" stroke="black" stroke-width="2" rx="4"/>
-  
-  <!-- Nose -->
-  <path d="M 150 70 L 120 120 L 120 180 L 150 180 L 150 70 Z" fill="white" stroke="black" stroke-width="2"/>
-  <path d="M 250 70 L 280 120 L 280 180 L 250 180 L 250 70 Z" fill="white" stroke="black" stroke-width="2"/>
-  <rect x="150" y="70" width="100" height="110" fill="${teamColor}" stroke="black" stroke-width="2"/>
-  
-  <!-- Front Wheels -->
-  <rect x="80" y="160" width="40" height="100" fill="black" stroke="black" stroke-width="2" rx="4"/>
-  <rect x="280" y="160" width="40" height="100" fill="black" stroke="black" stroke-width="2" rx="4"/>
-  
-  <!-- Main Body - Front Section -->
-  <path d="M 120 180 L 120 300 L 140 320 L 260 320 L 280 300 L 280 180 L 120 180 Z"
-        fill="${teamColor}" stroke="black" stroke-width="2"/>
-  
-  <!-- Cockpit -->
-  <ellipse cx="200" cy="250" rx="40" ry="60" fill="#e5e5e5" stroke="black" stroke-width="2"/>
-  
-  <!-- Main Body - Middle Section -->
-  <rect x="140" y="320" width="120" height="200" fill="${teamColor}" stroke="black" stroke-width="2"/>
-  
-  <!-- Side Pods -->
-  <path d="M 50 300 L 140 320 L 140 520 L 50 540 L 50 300 Z"
-        fill="${teamColor}" stroke="black" stroke-width="2"/>
-  <path d="M 350 300 L 260 320 L 260 520 L 350 540 L 350 300 Z"
-       fill="${teamColor}" stroke="black" stroke-width="2"/>
-  
-  <!-- Rear Wheels -->
-  <rect x="60" y="480" width="50" height="120" fill="black" stroke="black" stroke-width="2" rx="4"/>
-  <rect x="290" y="480" width="50" height="120" fill="black" stroke="black" stroke-width="2" rx="4"/>
-  
-  <!-- Rear Body -->
-  <path d="M 140 520 L 100 600 L 100 650 L 140 680 L 260 680 L 300 650 L 300 600 L 260 520 L 140 520 Z"
-        fill="${teamColor}" stroke="black" stroke-width="2"/>
-  
-  <!-- Engine Cover -->
-  <rect x="170" y="560" width="60" height="100" fill="#f0f0f0" stroke="black" stroke-width="2" rx="4"/>
-  
-  <!-- Rear Wing -->
-  <rect x="80" y="690" width="240" height="25" fill="${teamColor}"" stroke="black" stroke-width="2" rx="4"/>
-  <rect x="60" y="720" width="280" height="30" fill="${teamColor}" stroke="black" stroke-width="2" rx="4"/>
+      <svg class="racecar-svg" viewBox="0 0 400 800" xmlns="http://www.w3.org/2000/svg" overflow="visible">
+      <g class="car-body">
+            <!-- Front Wing -->
+            <rect x="50" y="50" width="300" height="20" fill="${teamColor}" stroke="black" stroke-width="2" rx="4"/>
+
+            
+            <!-- Nose -->
+            <path d="M 150 70 L 120 120 L 120 180 L 150 180 L 150 70 Z" fill="white" stroke="black" stroke-width="2"/>
+            <path d="M 250 70 L 280 120 L 280 180 L 250 180 L 250 70 Z" fill="white" stroke="black" stroke-width="2"/>
+            <rect x="150" y="70" width="100" height="110" fill="${teamColor}" stroke="black" stroke-width="2"/>
+            
+            <!-- Front Wheels -->
+            <rect x="80" y="160" width="40" height="100" fill="black" stroke="black" stroke-width="2" rx="4"/>
+            <rect x="280" y="160" width="40" height="100" fill="black" stroke="black" stroke-width="2" rx="4"/>
+            
+            <!-- Main Body - Front Section -->
+            <path d="M 120 180 L 120 300 L 140 320 L 260 320 L 280 300 L 280 180 L 120 180 Z"
+                  fill="${teamColor}" stroke="black" stroke-width="2"/>
+            
+            <!-- Cockpit -->
+            <ellipse cx="200" cy="250" rx="40" ry="60" fill="#e5e5e5" stroke="black" stroke-width="2"/>
+            
+            <!-- Main Body - Middle Section -->
+            <rect x="140" y="320" width="120" height="200" fill="${teamColor}" stroke="black" stroke-width="2"/>
+            
+            <!-- Side Pods -->
+            <path d="M 50 300 L 140 320 L 140 520 L 50 540 L 50 300 Z"
+                  fill="${teamColor}" stroke="black" stroke-width="2"/>
+            <path d="M 350 300 L 260 320 L 260 520 L 350 540 L 350 300 Z"
+                  fill="${teamColor}" stroke="black" stroke-width="2"/>
+            
+            <!-- Rear Wheels -->
+            <rect x="60" y="480" width="50" height="120" fill="black" stroke="black" stroke-width="2" rx="4"/>
+            <rect x="290" y="480" width="50" height="120" fill="black" stroke="black" stroke-width="2" rx="4"/>
+            
+            <!-- Rear Body -->
+            <path d="M 140 520 L 100 600 L 100 650 L 140 680 L 260 680 L 300 650 L 300 600 L 260 520 L 140 520 Z"
+                  fill="${teamColor}" stroke="black" stroke-width="2"/>
+            
+            <!-- Engine Cover -->
+            <rect x="170" y="560" width="60" height="100" fill="#f0f0f0" stroke="black" stroke-width="2" rx="4"/>
+            
+            <!-- Rear Wing -->
+            <rect x="80" y="690" width="240" height="25" fill="${teamColor}"" stroke="black" stroke-width="2" rx="4"/>
+            <rect x="60" y="720" width="280" height="30" fill="${teamColor}" stroke="black" stroke-width="2" rx="4"/>
+            </g>
       </svg>
 `;}
 

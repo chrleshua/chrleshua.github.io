@@ -35,12 +35,12 @@ body {
   background-image: 
     repeating-linear-gradient(
       45deg, 
-      rgba(51, 51, 51, 0.2) 0px, rgba(51, 51, 51, 0.2) 2px, 
+      rgba(51, 51, 51, 0.25) 0px, rgba(51, 51, 51, 0.25) 2px, 
       #0d0d0d 2px, #0d0d0d 4px
     ),
     repeating-linear-gradient(
       -45deg, 
-      rgba(51, 51, 51, 0.2) 0px, rgba(51, 51, 51, 0.2) 2px, 
+      rgba(51, 51, 51, 0.25) 0px, rgba(51, 51, 51, 0.25) 2px, 
       #0d0d0d 2px, #0d0d0d 4px
     );
   background-size: 8px 8px;
@@ -80,14 +80,12 @@ h1 {
 
 #f1-title {
   font-size: 14vw;
-  text-shadow: 0px 0px 2px red;
+  text-shadow: 1px 1px 10px red;
   transition: font-size 0.3s ease-out, transform 0.3s ease-out;
 }
 
 #f1-subtitle {
-  font-size: 30px;
   margin-top: 15px;
-  text-shadow: 2px 2px 8px #fff;
   transition: transform 0.3s ease-out, opacity 0.3s ease-out;
 }
 
@@ -101,7 +99,7 @@ h1 {
   font-size: 30px;
   margin-top: 500px;
   text-align: center;
-  text-shadow: 0px 0px 2px #1a1a1a;
+  text-shadow: 0px 0px 4px #fff;
   transition: transform 0.3s ease-out, opacity 0.3s ease-out;
 }
 
@@ -125,6 +123,7 @@ h1 {
 select, button {
   padding: 5px 10px;
   font-size: 14px;
+  font-family: 'Formula1-Bold';
   background-color: #111;
   color: #fff;
   border: 1px solid #555;
@@ -134,6 +133,7 @@ select, button {
 
 button:hover, select:hover {
   border-color: #ff0000;
+  font-family: 'Formula1-Bold';
 }
 
 /* Toggle Button */
@@ -149,6 +149,12 @@ button:hover, select:hover {
   background-color: #111;
   border-color: #FFD700;
 }
+
+#toggleView.active {
+  background-color: #e10600;
+  border-color: #e10600;
+}
+
 
 /* -------------------------- SVG Containers -------------------------- */
 
@@ -614,6 +620,11 @@ body::-webkit-scrollbar {
 
 .racecar-svg {
   background-color: transparent;
+  overflow: visible;
 }
 
-
+#top5-svg {
+  width: 1200px;
+  height: 800px;
+  background: rgb(101, 101, 101);
+}

@@ -81,15 +81,17 @@ d3.csv("data/f1db.csv", d => ({
 
   updateRace(races[0]);
   updatePit(races[0]);
+  updateRaceSim(races[0]);
 
 
   // listeners
   select.on("change", () => updateRace(select.property("value")));
   d3.select("#restart").on("click", () => {
     updateRace(select.property("value"));
+    updateRaceSim(select.property("value"));
   });
 
-  select_pit.on("change", () => updatePit(select_pit).property("value"));
+  select_pit.on("change", () => updatePit(select_pit.property("value")));
 
   setupPodium(); // sets up buttons and draws constructors by default
 });
@@ -110,6 +112,296 @@ function updatePit(raceName) {
   drawPitStops(raceData);
 }
 
+function updateRaceSim(raceName) {
+  const raceData = allData
+    .filter(d => d.raceName === raceName)
+    .sort((a, b) => a.grid - b.grid);
+
+  drawRaceSim(raceData);
+}
+
+d3.select("#auto-select").on("click", async () => {
+  const select = d3.select("#raceSelect");
+  const selectPit = d3.select("#raceSelect1");
+
+  const g = d3.select("#auto-select");
+
+  
+
+  // get current index
+  let currentRace = select.property("value");
+  let startIndex = races.findIndex(r => r === currentRace);
+  if (startIndex === -1) startIndex = 0;
+
+  for (let i = startIndex; i < races.length; i++) {
+    const race = races[i];
+
+    // update both grid and pit stop
+    updateRace(race);
+    updatePit(race);
+
+    // update select dropdowns visually
+    select.property("value", race);
+    selectPit.property("value", race);
+
+    // wait 7 seconds before next race
+    if (i < races.length - 1) {
+      await new Promise(resolve => setTimeout(resolve, 6000));
+    }
+  }
+});
+
+d3.select("#show-graph").on("click", () => {
+  document.getElementById("top5-view").classList.add("hidden");
+  document.getElementById("grid-view").classList.remove("hidden");
+
+  d3.select("#show-graph").classed("active", true);
+  d3.select("#show-top5-grid").classed("active", false);
+
+  updateRace(d3.select("#raceSelect").property("value"));
+});
+
+d3.select("#show-top5-grid").on("click", () => {
+  const btn = d3.select("#show-top5-grid");
+  document.getElementById("grid-view").classList.add("hidden");
+  document.getElementById("top5-view").classList.remove("hidden");
+
+  d3.select("#show-graph").classed("active", false);
+  d3.select("#show-top5-grid").classed("active", true);
+
+  updateRaceSim(d3.select("#raceSelect").property("value"));
+});
+
+function drawRaceSim(raceData) {
+  const g = d3.select("#top5-svg");
+  g.selectAll("*").remove(); // clear previous
+
+  const svgW = +g.attr("width");
+  const svgH = +g.attr("height");
+
+  const carW = 100;
+  const carH = 200;
+  const spacingX = 100;
+  const startX = 150;
+  const yOffsetTop = 200;
+
+  const top5 = raceData
+    .filter(d => d.grid >= 1 && d.grid <= 5)
+    .sort((a, b) => a.grid - b.grid);
+
+  // stop any previous intervals
+  if(window.audienceIntervals) window.audienceIntervals.forEach(i=>i.stop());
+  window.audienceIntervals = [];
+
+  // --- FLAGS ---
+  const flagWidth = 40;
+  const flagHeight = 60;
+  const leftFlag = g.append("rect")
+    .attr("x", 0).attr("y",20)
+    .attr("width",flagWidth).attr("height",flagHeight)
+    .attr("fill","green").style("display","none");
+  const rightFlag = g.append("rect")
+    .attr("x",svgW-flagWidth).attr("y",20)
+    .attr("width",flagWidth).attr("height",flagHeight)
+    .attr("fill","green").style("display","none");
+
+  // --- TOOLTIP ---
+  const tooltip = d3.select("body").append("div")
+    .attr("class","tooltip")
+    .style("opacity",0)
+    .style("position","absolute")
+    .style("background","rgba(0,0,0,0.8)")
+    .style("color","#fff")
+    .style("padding","6px 10px")
+    .style("border-radius","5px")
+    .style("pointer-events","none")
+    .style("font-family","Formula1-Bold");
+
+  // --- CARS + BRACKETS + DRIVER NAMES ---
+  const carInfo = top5.map((d,i)=>{
+    const x = startX + i*(carW + spacingX);
+    const y = yOffsetTop + i*30;
+
+    const bracketG = g.append("g")
+      .attr("class","bracket")
+      .attr("transform",`translate(${x},${y-40})`);
+    bracketG.append("rect").attr("width",carW).attr("height",30)
+      .attr("fill","white").attr("rx",5).attr("ry",5);
+    bracketG.append("text")
+      .attr("x",carW/2).attr("y",15)
+      .attr("text-anchor","middle").attr("dominant-baseline","middle")
+      .attr("fill","black").attr("font-size","18px").attr("font-family","Formula1-Bold")
+      .text(`P${d.grid}`);
+
+    const carG = g.append("g")
+      .attr("class","car")
+      .attr("transform",`translate(${x},${y})`);
+
+    carG.append("foreignObject")
+      .attr("width",carW).attr("height",carH)
+      .html(racecarSVG(teamColors[d.constructorName]||"#fff"));
+
+    carG.append("text")
+      .attr("x",carW/2).attr("y",carH+20)
+      .attr("text-anchor","middle")
+      .attr("fill",teamColors[d.constructorName]||"#fff")
+      .attr("font-size","16px")
+      .attr("font-family","Formula1-Bold")
+      .text(d.driverName);
+
+    carG.on("mouseover",(event)=>{
+      tooltip.style("opacity",1)
+        .style("left",(event.pageX+10)+"px")
+        .style("top",(event.pageY-20)+"px")
+        .html(`<strong>${d.driverName}</strong><br/>Grid: ${d.grid}<br/>Final: ${d.positionOrder}`);
+    }).on("mouseout",()=>tooltip.style("opacity",0));
+
+    return {x,carG,bracketG,driver:d};
+  });
+
+  // --- START BUTTON ---
+  const startBtn = g.append("foreignObject")
+    .attr("x", svgW/2-250).attr("y",20).attr("width",500).attr("height",120)
+    .append("xhtml:div")
+    .style("display","flex").style("justify-content","center").style("align-items","center")
+    .style("font-size","48px").style("font-family","Formula1-Bold")
+    .style("background-color","red").style("color","white").style("border-radius","15px")
+    .style("cursor","pointer").text("START");
+
+  startBtn.on("click", function(){
+    d3.select(this.parentNode).style("display","none");
+    leftFlag.style("display",null); rightFlag.style("display",null);
+
+    const exitY = svgH + 100;
+    const p3Y = yOffsetTop + 2*30;
+
+    // Animate cars to P3Y then random movement
+    carInfo.forEach(info=>{
+      const {x,carG,bracketG} = info;
+      carG.transition().duration(1500)
+        .attr("transform",`translate(${x},${p3Y})`)
+        .on("end", function repeat(){
+          const dx = (Math.random()-0.5)*25;
+          const dy = (Math.random()-0.5)*30;
+          d3.select(this)
+            .transition().duration(1000+Math.random()*400)
+            .attr("transform",`translate(${x+dx},${p3Y+dy})`)
+            .on("end",repeat);
+        });
+
+      bracketG.transition().duration(2500).attr("transform",`translate(${x},${exitY})`);
+    });
+
+    leftFlag.transition().duration(2500).attr("y",exitY);
+    rightFlag.transition().duration(2500).attr("y",exitY);
+
+    // --- BLEACHERS ---
+    const bleacherWidth = 60;
+    g.append("rect")
+    .attr("class", "bleacher-rect")
+    .attr("x",0).attr("y",0).attr("width",bleacherWidth).attr("height",svgH).attr("fill","white");
+
+    g.append("rect")
+    .attr("class", "bleacher-rect")
+    .attr("x",svgW-bleacherWidth).attr("y",0).attr("width",bleacherWidth).attr("height",svgH).attr("fill","white");
+
+    // --- AUDIENCE ---
+    const colors = ["#000","#666","#00f"];
+    const circleRadius = 15; const spawnInterval=100; const speed=1500;
+    function spawnCircle(startX){
+      const x = startX + Math.random()*bleacherWidth;
+      g.append("circle")
+        .attr("class", "audience-circle")
+        .attr("cx",x).attr("cy",-circleRadius).attr("r",circleRadius)
+        .attr("fill",colors[Math.floor(Math.random()*colors.length)])
+        .attr("opacity",0.9)
+        .transition().duration(speed).ease(d3.easeLinear)
+        .attr("cy",svgH+circleRadius).remove();
+    }
+    const leftInterval = d3.interval(()=>spawnCircle(0),spawnInterval);
+    const rightInterval = d3.interval(()=>spawnCircle(svgW-bleacherWidth),spawnInterval);
+    window.audienceIntervals.push(leftInterval,rightInterval);
+
+    // --- AFTER 5 SECONDS: FINAL 5 ---
+    setTimeout(()=>{
+      const final5Drivers = raceData.sort((a,b)=>a.positionOrder-b.positionOrder).slice(0,5).map(d=>d.driverName);
+
+      const finalSpacing = (svgH-150)/8; // more exaggerated Y positions
+      final5Drivers.forEach((name,i)=>{
+        const finalY = 150 + i*finalSpacing;
+        const x = startX + i*(carW+spacingX);
+        let existing = carInfo.find(c=>c.driver.driverName===name);
+        if(existing){
+          existing.carG.transition().duration(2000)
+            .attr("transform",`translate(${x},${finalY})`);
+        } else {
+          // Animate new car driving in
+          const driverData = raceData.find(d=>d.driverName===name);
+          const carG = g.append("g").attr("class","car").attr("transform",`translate(${x},${exitY})`);
+
+          carG.append("foreignObject").attr("width",carW).attr("height",carH)
+            .html(racecarSVG(teamColors[driverData.constructorName]||"#fff"));
+            
+          carG.append("text")
+            .attr("x",carW/2).attr("y",carH+20)
+            .attr("text-anchor","middle")
+            .attr("fill",teamColors[driverData.constructorName]||"#fff")
+            .attr("font-size","16px")
+            .attr("font-family","Formula1-Bold")
+            .text(driverData.driverName);
+      
+          carG.on("mouseover",(event)=>{
+            tooltip.style("opacity",1)
+              .style("left",(event.pageX+10)+"px")
+              .style("top",(event.pageY-20)+"px")
+              .html(`<strong>${driverData.driverName}</strong><br/>Grid: ${driverData.grid}<br/>Final: ${driverData.positionOrder}`);
+          }).on("mouseout",()=>tooltip.style("opacity",0));
+
+          carG.transition().duration(2000).attr("transform",`translate(${x},${finalY})`);
+
+          carInfo.push({x,carG,driver:driverData});
+        }
+      });
+
+      // Remove non-final cars
+      carInfo.forEach(info=>{
+        if(!final5Drivers.includes(info.driver.driverName)){
+          info.carG.transition().duration(2000)
+            .attr("transform",`translate(${info.x},${exitY})`);
+        }
+      });
+    },5000);
+
+    // --- AFTER 7 SECONDS: END RACE ---
+    setTimeout(()=>{
+      window.audienceIntervals.forEach(i=>i.stop());
+      // Bleachers exit
+      g.selectAll(".bleacher-rect").transition().duration(2000).attr("y",exitY);
+
+      // Display final positions rectangle
+      const rectX = startX;
+      const rectWidth = (carW+spacingX)*5-spacingX;
+      g.append("rect").attr("x",rectX).attr("y",10)
+        .attr("class", "final-banner")
+        .attr("width",rectWidth).attr("height",50)
+        .attr("fill","black").attr("stroke","white").attr("stroke-width",4);
+      g.append("text").attr("x",rectX+rectWidth/2).attr("y",45)
+      .attr("class", "final-banner")
+        .attr("text-anchor","middle")
+        .attr("fill","white")
+        .attr("font-size","24px")
+        .attr("font-family","Formula1-Bold")
+        .text("FINAL POSITIONS");
+    },7000);
+  });
+}
+
+
+
+
+
+
+
 /* ------------------ GRID VISUALIZATION ------------------ */
 function drawGrid(raceData, skipAnimation = false) {
   // prepare scales / domains
@@ -117,6 +409,7 @@ function drawGrid(raceData, skipAnimation = false) {
   y.domain(raceData.map(d => d.driverName));
 
   // clear previous content
+
   g.selectAll("*").remove();
   g.selectAll(".dotted-line").remove();
 
@@ -133,6 +426,7 @@ function drawGrid(raceData, skipAnimation = false) {
     .attr("y", 40)
     .attr("fill", "#fff")
     .attr("text-anchor", "middle")
+    .style("font-family", "Formula1-Bold")
     .text("Race Finish Position");
 
   // Y axis
@@ -144,6 +438,7 @@ function drawGrid(raceData, skipAnimation = false) {
     .attr("y", -120)
     .attr("fill", "#fff")
     .attr("text-anchor", "middle")
+    .style("font-family", "Formula1-Bold")
     .text("Driver");
 
   // grid dots (initial positions)
@@ -153,7 +448,7 @@ function drawGrid(raceData, skipAnimation = false) {
   gridDots.enter()
     .append("circle")
     .attr("class", "gridDot")
-    .attr("cx", d => x(d.grid))
+    .attr("cx", d => x(d.grid || d.positionOrder)) // handle cases with grid=0
     .attr("cy", d => y(d.driverName) + y.bandwidth() / 2)
     .attr("r", 5)
     .attr("fill", "#fff")
@@ -343,13 +638,13 @@ function drawPitStops(raceData) {
         const container = document.querySelector("#pitlane-view");
         const stationX = this.getBoundingClientRect().left + container.scrollLeft;
         const centerX = stationX - container.offsetWidth / 2 + 150;
-        container.scrollTo({ left: centerX, behavior: "smooth" , duration: 500});
+        container.scrollTo({ left: centerX, behavior: "smooth" , duration: 250});
     
         // 3. zoom into station
         const station = d3.select(this);
     
         station.transition()
-            .duration(500)
+            .duration(250)
             .on("end", () => {
                 // 4. After zoom -> switch views
                 document.getElementById("pitlane-view").classList.add("hidden");
@@ -387,7 +682,7 @@ function drawTeamPitView(teamName, raceData) {
     .attr("x", 0).attr("y", 0)
     .attr("width", 1000).
     attr("height", 800)
-    .attr("fill", "#efefef");
+    .attr("fill", "#dddddd");
 
   // small header with team name (left)
   svgSel.append("text")
@@ -425,8 +720,7 @@ function drawTeamPitView(teamName, raceData) {
     d3.select("#team-view").classed("hidden", true);
     d3.select("#pitlane-view").classed("hidden", false);
 
-    // optional: clear team view svg content
-    // svgSel.selectAll("*").remove();
+    svgSel.selectAll("*").remove();
 
     // restore focus/scroll to pitlane (optional)
     const wrapper = document.querySelector(".pitlane-view");
@@ -474,14 +768,14 @@ function drawTeamPitView(teamName, raceData) {
     name: drivers[0].driverName,
     pitStops: drv1Data.pitStops ?? "N/A",
     fastestLap: drv1Data.fastestLap ?? drv1Data.fastestLapTime ?? "N/A",
-    avgLap: drv1Data.avgLapTime_ms ?? drv1Data.avgLapTime ?? "N/A",
+    avgLap: formatAndCapLap(drv1Data.avgLapTime_ms) ?? "N/A",
     finish: drv1Data.positionOrder ?? drv1Data.position ?? "N/A",
   };
   const info2 = {
     name: drivers[1].driverName,
     pitStops: drv2Data.pitStops ?? "N/A",
-    fastestLap: drv2Data.fastestLap ?? drv2Data.fastestLapTime ?? "DNF (did not",
-    avgLap: drv2Data.avgLapTime_ms ?? drv2Data.avgLapTime ?? "N/A",
+    fastestLap: drv2Data.fastestLap ?? drv2Data.fastestLapTime ?? "N/A",
+    avgLap: formatAndCapLap(drv2Data.avgLapTime_ms) ?? "N/A",
     finish: drv2Data.positionOrder ?? drv2Data.position ?? "N/A",
   };
 
@@ -492,7 +786,7 @@ const foreign1 = svgSel.append("foreignObject")
   .attr("y", yOffset)
   .on("mouseover", (event) => {
     tooltip.style("opacity", 0.9)
-      .style("left", (event.pageX + 12) + "px")
+      .style("left", (event.pageX + 30) + "px")
       .style("top", (event.pageY - 28) + "px")
       .html(`<strong>${info1.name}</strong><br/>
              Pit stops: ${info1.pitStops}<br/>
@@ -501,7 +795,7 @@ const foreign1 = svgSel.append("foreignObject")
              Final pos: ${info1.finish}`);
   })
   .on("mousemove", (event) => {
-    tooltip.style("left", (event.pageX + 12) + "px")
+    tooltip.style("left", (event.pageX + 30) + "px")
            .style("top", (event.pageY - 28) + "px");
   })
   .on("mouseout", () => tooltip.style("opacity", 0));
@@ -516,7 +810,7 @@ const foreign2 = svgSel.append("foreignObject")
   .attr("y", yOffset)
   .on("mouseover", (event) => {
     tooltip.style("opacity", 0.9)
-      .style("left", (event.pageX + 12) + "px")
+      .style("left", (event.pageX + 30) + "px")
       .style("top", (event.pageY - 28) + "px")
       .html(`<strong>${info2.name}</strong><br/>
              Pit stops: ${info2.pitStops}<br/>
@@ -525,7 +819,7 @@ const foreign2 = svgSel.append("foreignObject")
              Final pos: ${info2.finish}`);
   })
   .on("mousemove", (event) => {
-    tooltip.style("left", (event.pageX + 12) + "px")
+    tooltip.style("left", (event.pageX + 30) + "px")
            .style("top", (event.pageY - 28) + "px");
   })
   .on("mouseout", () => tooltip.style("opacity", 0));
@@ -535,8 +829,20 @@ foreign2.append("xhtml:div")
 
   }
 
-
-
+  function formatAndCapLap(ms, minSeconds = 60, maxSeconds = 120) {
+    if (ms == null || isNaN(ms) ) return "N/A";
+    // Convert ms → seconds
+    let sec = ms / 1000;
+  
+    // Apply cap
+    sec = Math.max(minSeconds, Math.min(sec, maxSeconds));
+  
+    // Convert seconds → M:SS.sss
+    const minutes = Math.floor(sec / 60);
+    const seconds = (sec % 60).toFixed(3).padStart(6, "0");
+  
+    return `${minutes}:${seconds}`;
+  }
 
 
 
