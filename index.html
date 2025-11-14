@@ -6,15 +6,19 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <header>
-        <h1 style="font-family: 'Formula1-Bold', sans-serif;">
-            <span style="color: red;">FORMULA 1</span> 2024 Race Analysis
+    <header id="main-header">
+        <div style="height: 100px;"></div>
+        <h1 id="f1-title" style="font-family: 'Formula1-Bold', sans-serif;" 
+        class="scroll-scale f1-title" data-max="13" data-min="8">
+            <span style="color: red;">FORMULA 1</span>
         </h1>
+        <h2 class="scroll-scale f1-subtitle" data-max="5" data-min="2.5">2024 Race Analysis</h2>
     </header>
 
     <main>
-        <h2 style="text-align: center;"> Explore Race Statistics </h2>
-
+        <div style="height: 200px;"></div>
+        <h2 class="scroll-scale section-header" style="text-align: center;"> Explore Race Statistics </h2>
+        <div style="height: 200px;"></div>
         <section class="features mt-8 flex justify-center gap-8 flex-wrap">
             <!-- Podium -->
             <div class="feature-card" id="btn-podium">
@@ -39,12 +43,14 @@
                 Analyze team pit stop strategy and timing across the race.
               </p>
             </div>
+            <div style="height: 200px;"></div>
         </section>
 
         <!-- Podium Section -->
-        <section id="podium-section" class="mt-40">
+        <section id="podium-section">
+            <h2 class="scroll-scale section-header" data-max="15" data-min="3" style="text-align: center;"> Championship Overview</h2>
+            <div style="height: 100px;"></div>
             <div class="podium-header">
-            <h2> Championship Overview</h2>
             <div class="podium-buttons">
                 <button id="show-constructors" class="pill active">Constructors</button>
                 <button id="show-drivers" class="pill">Drivers</button>
@@ -52,17 +58,19 @@
             </div>
         
             <div id="constructors-view" class="podium-view">
-            <svg id="constructors-svg" width="500" height="500"></svg>
+            <svg id="constructors-svg" width="1150" height="800"></svg>
             </div>
         
             <div id="drivers-view" class="podium-view hidden">
-            <svg id="drivers-svg" width="1000" height="1000"></svg>
+            <svg id="drivers-svg" width="1200" height="1000" ></svg>
             </div>
         </section>
 
+
         <!-- Grid Section -->
         <section id="grid-section" class="mt-20">
-            <h2> Grid to Finish Positions</h2>
+            <h2 class="scroll-scale section-header" data-max="15" data-min="3" style="text-align: center;"> Grid to Finish Positions</h2>
+            <div style="height: 100px;"></div>
             <h3 style="text-align: center; font-style: italic;"> Select a race from 2024 and analyze the results. </h3>
 
             <div class="controls">
@@ -74,9 +82,13 @@
             <svg id="grid-svg" width="1000" height="600"></svg>
         </section>
 
+        <div style="height: 200px;"></div>
+
         <!-- Pitstop Section -->
-        <section id="pitstop-section" class="mt-20">
-            <h2> Pit Stop Visualization</h2>
+        <section id="pitstop-section">
+            
+            <h2 class="scroll-scale section-header" data-max="15" data-min="3" style="text-align: center;"> Pit Stop Visualization</h2>
+            <div style="height: 100px;"></div>
             <svg id="pitlane-svg" width="1000" height="150"></svg>
             <div id="tooltip" class="tooltip hidden"></div>
         </section>

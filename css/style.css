@@ -31,6 +31,36 @@ body {
   background-color: #000;
   color: #fff;
   margin: 20px;
+
+  background-image: 
+    repeating-linear-gradient(
+      45deg, 
+      rgba(51, 51, 51, 0.2) 0px, rgba(51, 51, 51, 0.2) 2px, 
+      #0d0d0d 2px, #0d0d0d 4px
+    ),
+    repeating-linear-gradient(
+      -45deg, 
+      rgba(51, 51, 51, 0.2) 0px, rgba(51, 51, 51, 0.2) 2px, 
+      #0d0d0d 2px, #0d0d0d 4px
+    );
+  background-size: 8px 8px;
+}
+
+html, body {
+  overflow-y: scroll;   /* allow scrolling */
+  overflow-x: hidden; /* optional — prevents horizontal scroll */
+  
+  /* Hide scrollbar (Firefox) */
+  scrollbar-width: none;
+
+  /* Hide scrollbar (IE & Edge legacy) */
+  -ms-overflow-style: none;
+}
+
+/* Hide scrollbar (Chrome, Safari, Opera) */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
 }
 
 h1 {
@@ -38,6 +68,46 @@ h1 {
   text-align: center;
   color: #fff;
   font-size: 3em;
+}
+
+#main-header {
+  width: 100%;
+  text-align: center;
+  margin-top: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+#f1-title {
+  font-size: 14vw;
+  text-shadow: 0px 0px 2px red;
+  transition: font-size 0.3s ease-out, transform 0.3s ease-out;
+}
+
+#f1-subtitle {
+  font-size: 30px;
+  margin-top: 15px;
+  text-shadow: 2px 2px 8px #fff;
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+#section-header{
+  font-size: 30px;
+  margin-top: 500px;
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+.section-header {
+  font-size: 30px;
+  margin-top: 500px;
+  text-align: center;
+  text-shadow: 0px 0px 2px #1a1a1a;
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+
+.scroll-scale {
+  transition: font-size 0.3s ease-out, transform 0.3s ease-out;
 }
 
 /* -------------------------- Controls -------------------------- */
@@ -74,6 +144,7 @@ button:hover, select:hover {
   color: #fff;
   font-weight: bold;
 }
+
 #toggleView:hover {
   background-color: #111;
   border-color: #FFD700;
@@ -88,11 +159,48 @@ svg {
   border-radius: 10px;
 }
 
-#drivers-svg { 
-  width: 1000px; height: 1000px;
-  background: transparent; }
+#top5-svg {
+  width: 1000px; 
+  height: 1000px;
+}
 
-#constructors-svg { width: 1200px; height: 480px; overflow: visible; }
+#drivers-svg { 
+  width: 1200px; 
+  height: 1000px;
+  background: transparent;
+ }
+
+#constructors-svg { 
+  width: 1150px; 
+  height: 500px;
+  background: transparent;
+  overflow: visible;}
+
+
+#constructor-label {
+  font-family: "Arial", sans-serif;
+  font-size: 20px;
+  fill: #333;
+  text-anchor: middle;        /* horizontally centered */
+  dominant-baseline: middle;  /* vertically centered */
+}
+
+.race-view {
+  position: relative;
+  margin: auto;
+}
+
+.graph-view.hidden {
+  display: none;
+}
+
+/* Buttons */
+.race-buttons button {
+  margin-right: 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
 
 /* -------------------------- Tooltip -------------------------- */
 
@@ -104,11 +212,23 @@ svg {
   border-radius: 6px;
   pointer-events: none;
   font-family: 'Formula1-Regular';
-  font-size: 13px;
+  font-size: 15px;
   z-index: 1000;
 }
 
 .tooltip.hidden, #podium-tooltip.hidden { opacity: 0; }
+
+/*  aniamtion */
+
+.grid-group rect {
+  stroke: #fff;
+  stroke-width: 1;
+}
+
+.car-group text {
+  pointer-events: none;
+}
+
 
 /* -------------------------- Podium Section -------------------------- */
 
@@ -134,10 +254,21 @@ svg {
   border-color: #e10600;
 }
 
+/* -------------------------- Podium Views -------------------------- */
+
+.podium-view {
+  background:#1a1a1a; /* or same as page */
+  width: 89%;
+  overflow: visible;
+  margin-left: auto;
+  margin-right: auto;
+}
+.podium-view.hidden { display: none; }
+
+
 #podium-section {
   padding: 2rem;
-  background: linear-gradient(180deg, #0b0b0b 0%, #070707 100%);
-  border-top: 2px solid #1a1a1a;
+  background: transparent;
 }
 
 .podium-header {
@@ -167,24 +298,28 @@ svg {
 
 /* Podium layout */
 
-/* -------------------------- Podium Bars -------------------------- */
-
-.podium-view {
+/* ===== Podium: prevent CSS hover conflict and set origin ===== */
+.podium-root { /* keep existing layout but ensure transform origin is bottom center */
   display: flex;
-  gap: 20px;
-  align-items: flex-start;
   justify-content: center;
-  padding: 10px 20px;
+  /* align-items: flex-end; */
+  gap: 5px;
+  position: relative;
 }
 
-.podium-view svg {
-  width: 1000;
-  height: 1000px;
-  border-radius: 10px;
-  background: #111;
-  border: 2px solid #e10600;
-  box-shadow: 0 10px 30px rgba(225,16,0,0.12);
+/* remove any CSS hover scaling that previously conflicted */
+.podium-bar, .podium-bar rect {
+  transition: none; /* we animate via JS; disable CSS hover transitions to avoid conflicts */
+  /* transform-origin: bottom center; */
+  
+  pointer-events: auto;
+  box-shadow: 2px 2px 5px #fff;
 }
+
+
+
+
+/* -------------------------- Podium Bars -------------------------- */
 
 .hidden {
   display: none !important;
@@ -200,27 +335,6 @@ svg {
   padding: 10px 20px;
 }
 
-/* Make both svg containers take approximately equal visual space */
-#constructors-svg, #constructors-info {
-  width: calc(50% - 10px);
-  height: 420px; /* consistent height */
-  border-radius: 10px;
-  background: #111; /* dark background */
-}
-
-/* Always show red outline + shadow for podium container */
-#constructors-svg {
-  border: 2px solid #e10600;
-  box-shadow: 0 10px 30px rgba(225,16,0,0.12);
-}
-
-/* Info box default is neutral; will gain border on hover via JS */
-#constructors-info {
-  background: #0e0e0e;
-  border: none;
-  box-shadow: none;
-  padding: 8px;
-}
 
 /* podium rectangles */
 .podium-bar rect {
@@ -247,21 +361,38 @@ svg {
   pointer-events: none;
 }
 
-/* Info panel text sizes (bigger so it fills container) */
-#constructors-info text {
-  font-family: 'Formula1-Regular';
-  fill: #fff;
+
+#constructors-info-panel {
+  position: absolute;
+  top: 50px;
+  left: 900px; /* adjust as needed next to the SVG */
+  width: 250px;
+  color: #fff;
+  font-family: 'Formula1-Regular', sans-serif;
+  transition: opacity 0.3s ease;
 }
-#constructors-info .title {
+
+#constructors-info-panel .team-name {
+  font-family: 'Formula1-Bold';
   font-size: 22px;
+  margin-bottom: 6px;
 }
-#constructors-info .total {
-  font-size: 18px;
+
+#constructors-info-panel .placement,
+#constructors-info-panel .total-points {
+  font-size: 14px;
+  margin-bottom: 4px;
 }
-#constructors-info .driver {
-  font-size: 17px;
-  fill: #ddd;
+
+#constructors-info-panel .drivers-list {
+  font-size: 13px;
+  margin-top: 6px;
 }
+
+#constructors-info-panel .driver {
+  margin-bottom: 6px;
+}
+
 
 /* Remove default SVG outlines on focused elements */
 svg:focus { outline: none; }
@@ -269,10 +400,10 @@ svg:focus { outline: none; }
 /* -------------------------- Drivers Bar Chart -------------------------- */
 
 .driver-bar {
-  fill: #2b2b2b;
-  stroke: #333;
+  fill: #555;
+  /* stroke: rgb(162, 0, 0); */
   outline: red;
-  box-shadow: red;
+  box-shadow: rgb(156, 0, 0);
 }
 
 .driver-bar.highlight { fill: #444; }
@@ -287,11 +418,9 @@ svg:focus { outline: none; }
 /* Car icons for drivers */
 .car {
   width: 30px;
-  height: 20px;
+  height: 15px;
   rx: 3;
   cursor: pointer;
-  stroke: #000;
-  stroke-width: 1;
   transform-origin: left center;
 }
 
@@ -310,17 +439,17 @@ svg:focus { outline: none; }
   color: #fff;
   border: 2px solid red;
   border-radius: 1rem;
-  padding: 1.5rem;
+  box-shadow: 1px 1px 20px rgba(255, 0, 0, 0.6);
+  padding: 2rem;
   width: 280px;
   text-align: center;
-  box-shadow: 0 0 10px rgba(255, 0, 0, 0.1);
   transition: all 0.3s ease;
   cursor: pointer;
 }
 
 .feature-card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 0 40px rgba(255, 0, 0, 0.6);
+  transform: translateY(-25px);
+  box-shadow: 1px 1px 70px rgba(255, 0, 0, 0.6);
 }
 
 .feature-card img.icon {
@@ -345,14 +474,30 @@ svg:focus { outline: none; }
 
 /* -------------------------- Scroll Container -------------------------- */
 
-#scroll-container {
-  overflow-x: scroll;
+
+
+/* Disable horizontal scrolling */
+body {
+  overflow-x: hidden;   /* hide horizontal scroll */
+  overflow-y: auto;   /* still allow vertical scroll */
   scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
+}
+
+/* Chrome, Edge, Safari - hide scrollbar visually */
+body::-webkit-scrollbar {
+  width: 0px;
+  background: transparent; 
+}
+
+/* If you have a specific scrollable container */
+#scroll-container {
+  overflow-x: hidden;   /* no horizontal scroll */
+  overflow-y: scroll;   /* vertical scroll allowed */
 }
 
 #scroll-container::-webkit-scrollbar {
-  display: none; /* Chrome, Safari */
+  width: 0px;
+  background: transparent;
 }
 
 /* -------------------------- Lines -------------------------- */
@@ -360,10 +505,116 @@ svg:focus { outline: none; }
 .line, .top10 {
   stroke: #ff0000;
   stroke-width: 2px;
-  opacity: 0.6;
+  opacity: 0;
 }
 
-/* -------------------------- Podium Views -------------------------- */
+/* Pitlane & Stations */
+.pitlane-view {
+  width: 90%;
+  margin: 0 auto;       /* centers horizontally */
+  overflow-x: auto;
+  overflow-y: hidden;
+  background:"#D3D3D3";
+  padding: 10px;
+  white-space: nowrap;
+  position: relative;
+  display: block;       /* ensures margin auto works */
+}
 
-.podium-view { margin-top: 1rem; }
-.podium-view.hidden { display: none; }
+.pitlane-view::-webkit-scrollbar {
+  display: none;
+}
+
+
+#pitlane-svg {
+  height: 500px;
+}
+
+.pitstop-station {
+  display: inline-block;
+  margin-right: 40px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  position: relative;
+}
+
+
+/* Rect behind the station for hover outline */
+.pitstop-bg {
+  fill: none;
+  stroke: none;
+  stroke-width: 12;
+  rx: 6;
+}
+
+.pitstop-station:hover .pitstop-bg {
+  /* stroke: #fffa74; */
+  stroke: red;
+}
+
+.pitstop-dimmed {
+  opacity: 0.5;
+}
+
+.pit-team-name {
+  pointer-events: none;
+  font-weight: bold;
+}
+
+
+.driver-tooltip {
+  position: absolute;
+  background: #111;
+  color: white;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  pointer-events: none;
+  border: 2px solid white;
+  z-index: 9999;
+}
+.driver-tooltip.hidden {
+  display: none;
+}
+
+/* team view fill / hide */
+#team-view.hidden, #pitlane-view.hidden { display: none; }
+#team-view { 
+  width: 1000px;
+  height: 700px;
+  margin: 0 auto; }
+
+/* team view title */
+.team-view-title { font-weight: 700; }
+
+/* Back button styling (SVG group will hold it) */
+#team-back-btn rect { fill: #111; stroke: #333; }
+#team-back-btn text { pointer-events: none; }
+
+/* Tooltip ensure top layer */
+.tooltip { z-index: 2000; }
+
+/* Highlight station wrapper (outline box) */
+.pitstop-box {
+  fill: none;
+  stroke: rgba(255,255,255,0); /* invisible by default */
+  stroke-width: 3;
+}
+.pitstop-station.hovered .pitstop-box {
+  stroke: white; /* desired outline */
+}
+
+/* Make sure pitlane is horizontally centered */
+#pitlane-svg { display: block; margin: 0 auto; }
+
+#team-pit-svg {
+  width: 1000px;
+  height: 600px;
+  margin: 0 auto;
+}
+
+.racecar-svg {
+  background-color: transparent;
+}
+
+

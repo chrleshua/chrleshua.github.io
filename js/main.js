@@ -32,15 +32,6 @@ let allData = [];
 let races = [];
 let currentView = "finish";
 
-// Pit lane setup
-const pitSvg = d3.select("#pitlane-svg");
-const pitMargin = { top: 50, right: 50, bottom: 50, left: 150 };
-const pitHeight = +pitSvg.attr("height") - pitMargin.top - pitMargin.bottom;
-const pitG = pitSvg.append("g").attr("transform", `translate(${pitMargin.left},${pitMargin.top})`);
-
-// Constructors + drivers svg refs
-const constructorsSvg = d3.select("#constructors-svg");
-const driversSvg = d3.select("#drivers-svg");
 
 // Load data
 d3.csv("data/f1db.csv", d => ({
@@ -62,8 +53,6 @@ d3.csv("data/f1db.csv", d => ({
   avgLapTime_ms: +d.avgLapTime_ms
 })).then(data => {
   allData = data;
-  // If your CSV includes many years, you can filter to 2024 here if desired:
-  // allData = allData.filter(d => d.year === 2024);
 
   races = Array.from(new Set(allData.map(d => d.raceName))).sort((a,b) => a.localeCompare(b));
 
@@ -187,7 +176,8 @@ function updateRace(raceName, skipAnimation = false) {
 
   const teamSpacing = 180;
   const totalWidth = Math.max(teams.length * teamSpacing, 600);
-  pitSvg.attr("width", totalWidth + pitMargin.left + pitMargin.right);
+  // pitSvg.attr("width", totalWidth + pitMargin.left + pitMargin.right);
+  pitSvg.attr("width", 500)
 
   const pitLane = pitG.append("g")
     .attr("class", "pit-lane")
@@ -251,113 +241,181 @@ function setupPodium() {
   drawConstructorsPodium();
 }
 
+
 function drawConstructorsPodium() {
   const svg = constructorsSvg;
   svg.selectAll("*").remove();
 
-  // --- 1. Filter all 2024 GP points per constructor ---
-  const constructorsData = Array.from( d3.rollups(allData, v => d3.sum(v, d => d.points), 
-  d => d.constructorName), ([constructorName, points]) => ({ constructorName, points }) )
-  .sort((a, b) => d3.descending(a.points, b.points)) .slice(0, 5);
+  // --- 1. Top 5 constructors (by total points) ---
+  const constructorsData = Array.from(
+    d3.rollups(
+      allData,
+      v => d3.sum(v, d => d.points),
+      d => d.constructorName
+    ),
+    ([constructorName, points]) => ({ constructorName, points })
+  )
+  .sort((a, b) => d3.descending(a.points, b.points))
+  .slice(0, 5);
 
-  // Sort descending by points
-  constructorsData.sort((a, b) => d3.descending(a.points, b.points));
+  if (constructorsData.length === 0) return;
 
-  // --- 2. Map ordinal order to indices (4-2-1-3-5) ---
   const ordinalOrder = [4, 2, 1, 3, 5];
   const indexOrder = ordinalOrder.map(o => o - 1);
 
-  const svgWidth = +svg.attr("width");
-  const svgHeight = +svg.attr("height");
-  const baseY = svgHeight - 10; // bottom line
-  const totalBars = indexOrder.length;
-  const barGap = 1; // bars touching
-  const barWidth = 60; // thinner
+  const baseBarWidth = 130;
+  const gap = 3;
+  const svgWidth = +constructorsSvg.attr("width");
+  const svgHeight = +constructorsSvg.attr("height");
+  const baseY = svgHeight - 350;
+  const centerX = svgWidth / 2;
 
-  // Height differences exaggerated
-  const heights = { 1: 320, 2: 240, 3: 180, 4: 140, 5: 100 };
+  const heights = { 1: 350, 2: 300, 3: 250, 4: 200, 5: 150 };
+
+  const fillMap = {};
+  constructorsData.forEach((d) => { fillMap[d.constructorName] = teamColors[d.constructorName] || "#fff"; });
+
+  // --- Info Panel BELOW bars ---
+  let infoEl = d3.select("#constructors-info-below");
+  if (infoEl.empty()) {
+    infoEl = d3.select(svg.node().parentNode)
+      .append("div")
+      .attr("id", "constructors-info-below")
+      .style("width", "100%")
+      .style("text-align", "center")
+      .style("color", "#fff")
+      .style("font-family", "Formula1-Regular")
+      .style("margin-top", "20px")
+      .style("transition", "opacity 0.3s ease")
+      .html(`<div style="font-family:Formula1-Bold;font-size:24px;"></div>`);
+  }
+
+  const n = indexOrder.length;
+  const totalWidth = n * baseBarWidth + (n - 1) * gap;
+  const startX = centerX - totalWidth / 2;
+
+  const groups = [];
 
   indexOrder.forEach((top5Index, posIdx) => {
-      const team = constructorsData[top5Index];
-      if (!team) return;
+    const team = constructorsData[top5Index];
+    if (!team) return;
 
-      const ordinal = top5Index + 1;
-      const barH = heights[ordinal] || 120;
-      const xPos = posIdx * (barWidth + barGap);
-      const yPos = baseY - barH;
+    const ordinal = top5Index + 1;
+    const barH = heights[ordinal] || 140;
+    const xPos = startX + posIdx * (baseBarWidth + gap);
 
-      const barGroup = svg.append("g")
-          .attr("class", `podium-bar ordinal-${ordinal}`)
-          .attr("transform", `translate(${xPos}, ${yPos})`);
+    const g = svg.append("g")
+      .attr("class", `podium-bar ordinal-${ordinal}`)
+      .attr("transform", `translate(${xPos}, ${baseY}) scale(1,0)`)
+      .style("cursor", "pointer");
 
-      // Rectangle bar
-      const rect = barGroup.append("rect")
-          .attr("width", barWidth)
-          .attr("height", barH)
-          .attr("fill", teamColors[team.constructorName] || "#fff")
-          .attr("rx", 2)
-          .style("cursor", "pointer")
-          .on("mouseover", (event) => {
-              // Grow height and width
-              const newHeight = barH ;
-              const deltaHeight = newHeight - barH;
+    g.append("rect")
+      .attr("x", 0)
+      .attr("y", -barH)
+      .attr("width", baseBarWidth)
+      .attr("height", barH)
+      .attr("rx", 6)
+      .attr("fill", fillMap[team.constructorName] || "transparent")
+      .attr("stroke", "#000")
+      .attr("stroke-width", 1.5)
+      .attr("class", "podium-rect");
 
-              rect.transition().duration(150)
-                  .attr("height", newHeight)
-                  .attr("y", yPos - deltaHeight)
-                  .attr("width", barWidth);
+    g.append("text")
+      .attr("class", "podium-place")
+      .attr("x", baseBarWidth / 2)
+      .attr("y", -barH / 2 + 6)
+      .attr("text-anchor", "middle")
+      .style("font-family", "Formula1-Bold")
+      .style("font-size", "18px")
+      .style("fill", "#fff")
+      .text(`#${ordinal}`);
 
-              // --- Show constructor info ---
-              const drivers = allData
-                  .filter(d => d.constructorName === team.constructorName && d.season === 2024)
-                  .sort((a,b)=>b.points - a.points)
-                  .slice(0,2);
+    g.append("text")
+      .attr("class", "team-label")
+      .attr("x", baseBarWidth / 2)
+      .attr("y", 20)
+      .attr("text-anchor", "middle")
+      .style("font-family", "Formula1-Bold")
+      .style("font-size", "14px")
+      .style("fill", fillMap[team.constructorName] || "#fff")
+      .text(team.constructorName);
 
-              const driverInfoHTML = drivers.map(d =>
-                  `<div>#${d.positionOrder} ${d.driverName}: ${d.points} pts</div>`
-              ).join("");
+    g.append("text")
+      .attr("class", "podium-pts")
+      .attr("x", baseBarWidth / 2)
+      .attr("y", -barH - 10)
+      .attr("text-anchor", "middle")
+      .style("font-family", "Formula1-Bold")
+      .style("font-size", "12px")
+      .style("fill", "#fff")
+      .text(`${team.points} pts`);
 
-              d3.select("#constructors-info")
-                  .html(`
-                      <div class="team-name" style="color:${teamColors[team.constructorName] || "#fff"}">
-                          ${team.constructorName} (#${ordinal}) - ${team.points} pts
-                      </div>
-                      ${driverInfoHTML}
-                  `)
-                  .style("opacity", 1);
-          })
-          .on("mouseout", () => {
-              rect.transition().duration(250)
-                  .attr("height", heights[ordinal])
-                  .attr("y", yPos + barH)
-                  .attr("width", barWidth);
+    g.on("mouseover", (event) => {
+      const focusedScaleX = 1.4;
+      const focusedScaleY = 1.2;
 
-              d3.select("#constructors-info").style("opacity", 0);
-          });
+      const widths = indexOrder.map((_, i) => (i === posIdx ? baseBarWidth * focusedScaleX : baseBarWidth));
+      const newTotalWidth = widths.reduce((a, b) => a + b, 0) + (widths.length - 1) * gap;
+      const newStartX = centerX - newTotalWidth / 2;
 
-      // Place number inside bar
-      barGroup.append("text")
-          .attr("class", "placement")
-          .attr("x", barWidth / 2)
-          .attr("y", barH / 2 + 6)
-          .text(`#${ordinal}`);
+      groups.forEach((obj, i) => {
+        const targetX = newStartX + widths.slice(0, i).reduce((a, b) => a + b, 0) + i * gap;
+        const isFocused = (i === posIdx);
+        const sX = isFocused ? focusedScaleX : 1;
+        const sY = isFocused ? focusedScaleY : 1;
+        obj.g.transition().duration(150)
+          .attr("transform", `translate(${targetX}, ${baseY}) scale(${sX}, ${sY})`);
+        obj.x = targetX;
+      });
 
-      // Team name on top
-      barGroup.append("text")
-          .attr("class", "team-name")
-          .attr("x", barWidth / 2)
-          .attr("y", -10)
-          .attr("fill", teamColors[team.constructorName] || "#fff")
-          .text(team.constructorName);
+      // Update centered info below
+      const hoveredTeam = constructorsData[top5Index];
+      const driverAgg = Array.from(
+        d3.rollups(
+          allData.filter(d => d.constructorName === hoveredTeam.constructorName),
+          v => d3.sum(v, d => d.points),
+          d => d.driverName
+        ),
+        ([driverName, pts]) => ({ driverName, pts })
+      ).sort((a, b) => d3.descending(a.pts, b.pts));
 
-      // Total points under bar
-      barGroup.append("text")
-          .attr("class", "points")
-          .attr("x", barWidth / 2)
-          .attr("y", barH + 20)
-          .text(`${team.points} pts`);
+      const driversHTML = driverAgg.map(d => `<div style="margin:6px 0;"><strong>${d.driverName}</strong> — ${d.pts} pts</div>`).join("");
+
+      infoEl.html(`
+          <div style="font-family:Formula1-Bold;font-size:22px;color:${fillMap[hoveredTeam.constructorName] || '#fff'};margin-bottom:6px;">
+              ${hoveredTeam.constructorName}
+          </div>
+          <div style="font-size:14px;margin-bottom:4px;">Placement: <strong>#${idx+1}</strong></div>
+          <div style="font-size:14px;margin-bottom:8px;">Total points: <strong>${hoveredTeam.points}</strong></div>
+          <div style="font-size:13px;">${driversHTML}</div>
+      `).style("opacity",1);
+    });
+
+    g.on("mouseout", () => {
+      const widths = indexOrder.map(() => baseBarWidth);
+      const totalW = widths.reduce((a, b) => a + b, 0) + (widths.length - 1) * gap;
+      const newStartX = centerX - totalW / 2;
+
+      groups.forEach((obj, i) => {
+        const targetX = newStartX + i * (baseBarWidth + gap);
+        obj.g.transition().duration(100)
+          .attr("transform", `translate(${targetX}, ${baseY}) scale(1,1)`);
+        obj.x = targetX;
+      });
+
+      // Reset info text
+      infoEl.html(`<div style="font-family:Formula1-Bold;font-size:24px;">Constructor Championship Podium</div>`);
+    });
+
+    groups.push({ g, x: xPos, idx: top5Index });
+  });
+
+  groups.forEach((obj, i) => {
+    obj.g.transition().delay(120 * i).duration(900).ease(d3.easeBackOut)
+      .attr("transform", `translate(${obj.x}, ${baseY}) scale(1,1)`);
   });
 }
+
 
 
 
@@ -376,7 +434,7 @@ function drawDriversChampionship() {
       ([driverName, points]) => ({ driverName, points })
   ).sort((a, b) => d3.descending(a.points, b.points));
 
-  const margin = { top: 100, right: 200, bottom: 100, left: 300 };
+  const margin = { top: 50, right: 150, bottom: 100, left: 200 };
   const width = +svg.attr("width") - margin.left - margin.right;
   const height = +svg.attr("height") - margin.top - margin.bottom;
 
@@ -448,11 +506,11 @@ function drawDriversChampionship() {
 
   raceWins.forEach(([driverName, races]) => {
       const y = yScale(driverName) + yScale.bandwidth() / 2; // center of bar
-      const carHeight = 14;
+      const carHeight = 15;
 
       races.forEach((raceObj, idx) => {
           const xEnd = 10 + idx * 35; // left-aligned spacing
-          const yEnd = y + carHeight + 6;
+          const yEnd = y + carHeight + 7;
           
 
           // Random starting point outside SVG
@@ -515,7 +573,14 @@ function drawDriversChampionship() {
   });
 }
 
+const pitSvg = d3.select("#pitlane-svg");
+const pitMargin = { top: 50, right: 50, bottom: 50, left: 150 };
+const pitHeight = +pitSvg.attr("height") - pitMargin.top - pitMargin.bottom;
+const pitG = pitSvg.append("g").attr("transform", `translate(${pitMargin.left},${pitMargin.top})`);
 
+// Constructors + drivers svg refs
+const constructorsSvg = d3.select("#constructors-svg");
+const driversSvg = d3.select("#drivers-svg");
 
 
 // ---------- Feature card scrolling ----------
@@ -527,4 +592,47 @@ document.querySelectorAll(".feature-card").forEach(card => {
       target.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   });
+});
+
+// === Scroll-based F1 title shrink ===
+const titleEl = document.querySelector("#f1-title");
+const subtitleEl = document.querySelector(".f1-subtitle");
+const sectionHeaders = document.querySelectorAll(".section-header");
+
+// --- Title shrink behavior ---
+const titleMax = parseFloat(titleEl.dataset.max);
+const titleMin = parseFloat(titleEl.dataset.min);
+const subtitleMax = parseFloat(subtitleEl.dataset.max);
+const subtitleMin = parseFloat(subtitleEl.dataset.min);
+
+window.addEventListener("scroll", () => {
+    const scrollY = window.scrollY;
+
+    // --- Main title ---
+    const maxScroll = 500; // px over which shrinking occurs
+    const titleFactor = Math.min(1, scrollY / maxScroll); // 0->1
+    const newTitleSize = titleMax - titleFactor * (titleMax - titleMin);
+    const newSubtitleSize = subtitleMax - titleFactor * (subtitleMax - subtitleMin);
+
+    titleEl.style.fontSize = `${newTitleSize}vw`;
+    subtitleEl.style.fontSize = `${newSubtitleSize}vw`;
+
+    // --- Section headers ---
+    const windowHeight = window.innerHeight;
+    sectionHeaders.forEach(header => {
+        const rect = header.getBoundingClientRect();
+        const headerCenter = rect.top + rect.height / 2;
+
+        // distance from viewport center
+        const distance = Math.abs(headerCenter - windowHeight / 2);
+
+        // scaling factor: 1 when far, maxScale when center
+        const maxDistance = windowHeight; // normalize
+        let factor = 1 - Math.min(distance / maxDistance, 1); // 0..1
+        const minScale = 2;
+        const maxScale = 3.5;
+
+        const scale = minScale + factor * (maxScale - minScale);
+        header.style.transform = `scale(${scale})`;
+    });
 });
