@@ -136,7 +136,6 @@ button:hover, select:hover {
   font-family: 'Formula1-Bold';
 }
 
-/* Toggle Button */
 #toggleView {
   margin-left: 1rem;
   border: 2px solid #e10600;
@@ -187,8 +186,8 @@ svg {
   font-family: "Arial", sans-serif;
   font-size: 20px;
   fill: #333;
-  text-anchor: middle;        /* horizontally centered */
-  dominant-baseline: middle;  /* vertically centered */
+  text-anchor: middle; 
+  dominant-baseline: middle; 
 }
 
 .race-view {
@@ -263,7 +262,7 @@ svg {
 /* -------------------------- Podium Views -------------------------- */
 
 .podium-view {
-  background:#1a1a1a; /* or same as page */
+  background:#1a1a1a; 
   width: 89%;
   overflow: visible;
   margin-left: auto;
@@ -304,20 +303,17 @@ svg {
 
 /* Podium layout */
 
-/* ===== Podium: prevent CSS hover conflict and set origin ===== */
-.podium-root { /* keep existing layout but ensure transform origin is bottom center */
+/* ===== Podium ===== */
+.podium-root {
   display: flex;
   justify-content: center;
-  /* align-items: flex-end; */
   gap: 5px;
   position: relative;
 }
 
-/* remove any CSS hover scaling that previously conflicted */
+
 .podium-bar, .podium-bar rect {
-  transition: none; /* we animate via JS; disable CSS hover transitions to avoid conflicts */
-  /* transform-origin: bottom center; */
-  
+  transition: none;
   pointer-events: auto;
   box-shadow: 2px 2px 5px #fff;
 }
@@ -331,8 +327,6 @@ svg {
   display: none !important;
 }
 
-
-/* layout for constructors area: svg + info side-by-side with equal height */
 #constructors-view {
   display: flex;
   gap: 20px;
@@ -342,13 +336,11 @@ svg {
 }
 
 
-/* podium rectangles */
 .podium-bar rect {
   transition: width 0.1s ease-in-out, height 0.1s ease-in-out;
   will-change: width, height, transform;
 }
 
-/* place text and team labels */
 .podium-place {
   font-family: 'Formula1-Bold';
   font-size: 18px;
@@ -371,7 +363,7 @@ svg {
 #constructors-info-panel {
   position: absolute;
   top: 50px;
-  left: 900px; /* adjust as needed next to the SVG */
+  left: 900px; 
   width: 250px;
   color: #fff;
   font-family: 'Formula1-Regular', sans-serif;
@@ -400,7 +392,6 @@ svg {
 }
 
 
-/* Remove default SVG outlines on focused elements */
 svg:focus { outline: none; }
 
 /* -------------------------- Drivers Bar Chart -------------------------- */
@@ -420,7 +411,6 @@ svg:focus { outline: none; }
   dominant-baseline: middle;
 }
 
-/* Car icons for drivers */
 .car {
   width: 30px;
   height: 15px;
@@ -480,11 +470,9 @@ svg:focus { outline: none; }
 /* -------------------------- Scroll Container -------------------------- */
 
 
-
-/* Disable horizontal scrolling */
 body {
-  overflow-x: hidden;   /* hide horizontal scroll */
-  overflow-y: auto;   /* still allow vertical scroll */
+  overflow-x: hidden; 
+  overflow-y: auto; 
   scrollbar-width: none; /* Firefox */
 }
 
@@ -496,8 +484,8 @@ body::-webkit-scrollbar {
 
 /* If you have a specific scrollable container */
 #scroll-container {
-  overflow-x: hidden;   /* no horizontal scroll */
-  overflow-y: scroll;   /* vertical scroll allowed */
+  overflow-x: hidden;  
+  overflow-y: scroll;  
 }
 
 #scroll-container::-webkit-scrollbar {
@@ -516,14 +504,14 @@ body::-webkit-scrollbar {
 /* Pitlane & Stations */
 .pitlane-view {
   width: 90%;
-  margin: 0 auto;       /* centers horizontally */
+  margin: 0 auto;    
   overflow-x: auto;
   overflow-y: hidden;
   background:"#D3D3D3";
   padding: 10px;
   white-space: nowrap;
   position: relative;
-  display: block;       /* ensures margin auto works */
+  display: block;     
 }
 
 .pitlane-view::-webkit-scrollbar {
@@ -544,7 +532,6 @@ body::-webkit-scrollbar {
 }
 
 
-/* Rect behind the station for hover outline */
 .pitstop-bg {
   fill: none;
   stroke: none;
@@ -553,7 +540,6 @@ body::-webkit-scrollbar {
 }
 
 .pitstop-station:hover .pitstop-bg {
-  /* stroke: #fffa74; */
   stroke: red;
 }
 
@@ -582,34 +568,34 @@ body::-webkit-scrollbar {
   display: none;
 }
 
-/* team view fill / hide */
+
 #team-view.hidden, #pitlane-view.hidden { display: none; }
 #team-view { 
   width: 1000px;
   height: 700px;
   margin: 0 auto; }
 
-/* team view title */
+
 .team-view-title { font-weight: 700; }
 
-/* Back button styling (SVG group will hold it) */
+
 #team-back-btn rect { fill: #111; stroke: #333; }
 #team-back-btn text { pointer-events: none; }
 
-/* Tooltip ensure top layer */
+
 .tooltip { z-index: 2000; }
 
-/* Highlight station wrapper (outline box) */
+
 .pitstop-box {
   fill: none;
-  stroke: rgba(255,255,255,0); /* invisible by default */
+  stroke: rgba(255,255,255,0); 
   stroke-width: 3;
 }
 .pitstop-station.hovered .pitstop-box {
-  stroke: white; /* desired outline */
+  stroke: white; 
 }
 
-/* Make sure pitlane is horizontally centered */
+
 #pitlane-svg { display: block; margin: 0 auto; }
 
 #team-pit-svg {

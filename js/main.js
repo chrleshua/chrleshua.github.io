@@ -77,8 +77,6 @@ d3.csv("data/f1db.csv", d => ({
       .text(d => d);
 
 
-  // initial draw
-
   updateRace(races[0]);
   updatePit(races[0]);
   updateRaceSim(races[0]);
@@ -93,7 +91,7 @@ d3.csv("data/f1db.csv", d => ({
 
   select_pit.on("change", () => updatePit(select_pit.property("value")));
 
-  setupPodium(); // sets up buttons and draws constructors by default
+  setupPodium(); 
 });
 
 function updateRace(raceName, skipAnimation = false) {
@@ -126,9 +124,6 @@ d3.select("#auto-select").on("click", async () => {
 
   const g = d3.select("#auto-select");
 
-  
-
-  // get current index
   let currentRace = select.property("value");
   let startIndex = races.findIndex(r => r === currentRace);
   if (startIndex === -1) startIndex = 0;
@@ -136,15 +131,12 @@ d3.select("#auto-select").on("click", async () => {
   for (let i = startIndex; i < races.length; i++) {
     const race = races[i];
 
-    // update both grid and pit stop
     updateRace(race);
     updatePit(race);
 
-    // update select dropdowns visually
     select.property("value", race);
     selectPit.property("value", race);
 
-    // wait 7 seconds before next race
     if (i < races.length - 1) {
       await new Promise(resolve => setTimeout(resolve, 6000));
     }
@@ -189,7 +181,6 @@ function drawRaceSim(raceData) {
     .filter(d => d.grid >= 1 && d.grid <= 5)
     .sort((a, b) => a.grid - b.grid);
 
-  // stop any previous intervals
   if(window.audienceIntervals) window.audienceIntervals.forEach(i=>i.stop());
   window.audienceIntervals = [];
 
@@ -326,7 +317,7 @@ function drawRaceSim(raceData) {
     setTimeout(()=>{
       const final5Drivers = raceData.sort((a,b)=>a.positionOrder-b.positionOrder).slice(0,5).map(d=>d.driverName);
 
-      const finalSpacing = (svgH-150)/8; // more exaggerated Y positions
+      const finalSpacing = (svgH-150)/8;
       final5Drivers.forEach((name,i)=>{
         const finalY = 150 + i*finalSpacing;
         const x = startX + i*(carW+spacingX);
@@ -404,11 +395,11 @@ function drawRaceSim(raceData) {
 
 /* ------------------ GRID VISUALIZATION ------------------ */
 function drawGrid(raceData, skipAnimation = false) {
-  // prepare scales / domains
+
+
   x.domain([1, d3.max(raceData, d => d.positionOrder)]);
   y.domain(raceData.map(d => d.driverName));
 
-  // clear previous content
 
   g.selectAll("*").remove();
   g.selectAll(".dotted-line").remove();
@@ -461,14 +452,13 @@ function drawGrid(raceData, skipAnimation = false) {
   const circlesEnter = circles.enter()
     .append("circle")
     .attr("class", "driverCircle")
-    .attr("cx", d => x(d.grid)) // start at grid
+    .attr("cx", d => x(d.grid))
     .attr("cy", d => y(d.driverName) + y.bandwidth() / 2)
     .attr("r", 12)
     .attr("fill", d => teamColors[d.constructorName] || color(d.constructorId))
     .attr("opacity", 0.9)
     .style("cursor", "pointer")
     .on("mouseover", function (event, d) {
-      // grow on hover
       d3.select(this).transition().duration(120).attr("r", 18);
       tooltip.style("opacity", 1)
         .style("left", (event.pageX + 20) + "px")
@@ -488,17 +478,14 @@ function drawGrid(raceData, skipAnimation = false) {
       tooltip.style("opacity", 0);
     });
 
-  // merge so we have a stable selection if rerendering
   circlesEnter.merge(circles)
     .attr("cy", d => y(d.driverName) + y.bandwidth() / 2);
 
-  // Identify top10 names (finish)
   const top10Names = new Set(raceData.filter(d => d.positionOrder <= 10).map(d => d.driverName));
 
 
 
   if (!skipAnimation) {
-    // Animate from grid -> finish
     circlesEnter.merge(circles)
       .transition()
       .duration(4000)
@@ -526,26 +513,24 @@ function drawGrid(raceData, skipAnimation = false) {
           .duration(1000)
           .attr("opacity", 0.6);
       
-        // update opacity: top 10 full, bottom 10 half
+
         g.selectAll(".driverCircle")
           .attr("opacity", d => d.positionOrder <= 10 ? 0.95 : 0.5);
       });
 
 
   } else {
-    // immediate static positions (no animation)
+
     circlesEnter.merge(circles)
       .attr("cx", d => x(d.positionOrder));
 
-    // set opacities immediately
+
     g.selectAll(".driverCircle")
       .attr("opacity", d => top10Names.has(d.driverName) ? 0.95 : 0.5);
   }
 }
 
-
-
-// assumes pitstopSVG (string), teamColors (map), allData (array) already exist
+/* ------------------ PIT STOP VISUALIZATION ------------------ */
 function drawPitStops(raceData) {
   const svg = d3.select("#pitlane-svg");
   svg.selectAll("*").remove();
@@ -594,14 +579,12 @@ function drawPitStops(raceData) {
   stations.each(function(d) {
       const g = d3.select(this);
 
-      // Background rect for hover outline
       g.append("rect")
           .attr("class", "pitstop-bg")
           .attr("width", stationWidth)
           .attr("height", stationHeight)
           .attr("rx", 6);
 
-      // insert pitstop SVG
       const foreign = g.append("foreignObject")
           .attr("width", stationWidth)
           .attr("height", stationHeight)
@@ -616,7 +599,7 @@ function drawPitStops(raceData) {
           .attr("height", stationHeight)
           .node();
 
-      // team name text
+
       d3.select(innerSVG)
           .append("text")
           .attr("class", "pit-team-name")
@@ -629,62 +612,54 @@ function drawPitStops(raceData) {
           .attr("dominant-baseline", "middle")
           .text(d.constructorName);
 
-      // Click action: zoom & switch view
+
       g.on("click", function (event, d) {
-        // 1. record team
+
         selectedTeam = d.constructorName;
     
-        // 2. center scroll (your existing code already does this)
+
         const container = document.querySelector("#pitlane-view");
         const stationX = this.getBoundingClientRect().left + container.scrollLeft;
         const centerX = stationX - container.offsetWidth / 2 + 150;
-        container.scrollTo({ left: centerX, behavior: "smooth" , duration: 250});
+        container.scrollTo({ left: centerX, behavior: "smooth" , duration: 300});
     
-        // 3. zoom into station
+
         const station = d3.select(this);
     
         station.transition()
-            .duration(250)
+            .duration(500)
             .on("end", () => {
-                // 4. After zoom -> switch views
+
                 document.getElementById("pitlane-view").classList.add("hidden");
                 document.getElementById("team-view").classList.remove("hidden");
-    
-                // 5. draw new view
+
+
                 drawTeamPitView(selectedTeam, raceData);
             });
     });
     
   });
 
-  // reset scroll
   const wrapper = document.querySelector(".pitlane-view");
   if (wrapper) wrapper.scrollLeft = 0;
 }
 
-
-// Ensure this function is available in the same module scope as your other functions.
-// Expects racecarSVG() to be imported and return a string (either full <svg>...</svg> or inner contents).
-
 function drawTeamPitView(teamName, raceData) {
-  // Record selected team globally (so other code can access)
+
   window.__selectedTeamName = teamName;
 
   const svgSel = d3.select("#team-pit-svg");
   svgSel.selectAll("*").remove();
 
-  // Container sizes
   const W = +svgSel.attr("width");
   const H = +svgSel.attr("height");
 
-  // grey background
   svgSel.append("rect")
     .attr("x", 0).attr("y", 0)
     .attr("width", 1000).
     attr("height", 800)
     .attr("fill", "#dddddd");
 
-  // small header with team name (left)
   svgSel.append("text")
     .attr("x", 20).attr("y", 40)
     .attr("class", "team-view-title")
@@ -693,8 +668,6 @@ function drawTeamPitView(teamName, raceData) {
     .style("fill", teamColors[teamName] || "#000")
     .text(teamName);
 
-  // Back button area (top-right)
-  // create a group for button to guarantee it exists for event binding
   const btnGroup = svgSel.append("g")
     .attr("id", "team-back-btn")
     .style("cursor", "pointer")
@@ -714,21 +687,19 @@ function drawTeamPitView(teamName, raceData) {
     .style("font-size", "12px")
     .text("Back to Pitlane");
 
-  // click to return to pit lane view
+
   btnGroup.on("click", () => {
-    // hide team view and show pitlane view (assumes these are controlled by classes .hidden)
+
     d3.select("#team-view").classed("hidden", true);
     d3.select("#pitlane-view").classed("hidden", false);
 
     svgSel.selectAll("*").remove();
 
-    // restore focus/scroll to pitlane (optional)
+
     const wrapper = document.querySelector(".pitlane-view");
     if (wrapper) wrapper.scrollLeft = 0;
   });
 
-  // Find the two drivers for this team for this raceData (raceData should be the selected race's records)
-  // If raceData not provided, attempt to derive from allData (filter the most recent race or first)
   let drivers = [];
   if (raceData && Array.isArray(raceData) && raceData.length) {
     drivers = Array.from(new Map(
@@ -737,7 +708,7 @@ function drawTeamPitView(teamName, raceData) {
         .map(d => [d.driverName, d])
     ).values());
   } else {
-    // fallback: take top two drivers from allData for this constructor
+
     drivers = Array.from(new Map(
       allData
         .filter(d => d.constructorName === teamName)
@@ -746,14 +717,14 @@ function drawTeamPitView(teamName, raceData) {
     ).values()).slice(0,2);
   }
 
-  // ensure two slots
+
   if (drivers.length === 0 && constructorsData) {
-    // try to pick from constructorsData global (if exists)
+
   }
-  // Layout: two cars side-by-side centered
-  const carW = 200;    // intrinsic viewBox width in template
-  const carH = 400;    // intrinsic height
-  const desiredH = Math.min(380, H - 140); // scale to fit vertically
+
+  const carW = 200;  
+  const carH = 400;   
+  const desiredH = Math.min(380, H - 140); 
   const scale = desiredH / carH;
   const spacing = 200;
   const totalW = (carW * scale) * 2 + spacing;
@@ -848,7 +819,7 @@ foreign2.append("xhtml:div")
 
 
 // ---------- PODIUM (Constructors + Drivers) ----------
-// Setup buttons and initial draw
+
 function setupPodium() {
   const showConstructorsBtn = document.getElementById("show-constructors");
   const showDriversBtn = document.getElementById("show-drivers");
@@ -871,7 +842,6 @@ function setupPodium() {
     drawDriversChampionship();
   });
 
-  // draw constructors by default
   drawConstructorsPodium();
 }
 
@@ -880,7 +850,7 @@ function drawConstructorsPodium() {
   const svg = constructorsSvg;
   svg.selectAll("*").remove();
 
-  // --- 1. Top 5 constructors (by total points) ---
+
   const constructorsData = Array.from(
     d3.rollups(
       allData,
@@ -915,20 +885,19 @@ function drawConstructorsPodium() {
 
   const groups = [];
 
-  // --- Info Panel BELOW bars ---
   let infoGroup = svg.select("g#info-panel");
   if (infoGroup.empty()) {
       infoGroup = svg.append("g")
           .attr("id", "info-panel")
-          .attr("transform", `translate(${svgWidth - 350}, 50)`); // position right side
+          .attr("transform", `translate(${svgWidth - 350}, 50)`); 
   
       infoGroup.append("text").attr("class", "team-name")
           .attr("y", 0)
-          .style("font-family", "Formula1-Bold").style("font-size", "60px")
+          .style("font-family", "Formula1-Bold").style("font-size", "60px") 
           .style("fill", "#fff");
   
       infoGroup.append("text").attr("class", "placement")
-          .attr("y", 60).style("font-size", "30px").style("fill", "#fff");
+          .attr("y", 60).style("font-size", "30px").style("fill", "#fff"); 
   
       infoGroup.append("text").attr("class", "total-points")
           .attr("y", 100).style("font-size", "30px").style("fill", "#fff");
@@ -1026,18 +995,18 @@ function drawConstructorsPodium() {
             .style("fill", fillMap[team.constructorName] || "#fff");
     
         infoGroup.select(".placement")
-        .text(`Placement: #${top5Index}`)
+        .text(`Placement: #${top5Index+1}`)
         .style("font-size", "30px");
 
         infoGroup.select(".total-points")
         .text(`Total points: ${team.points}`)
         .style("font-size", "30px");
     
-        // Clear old drivers
+
         const driverG = infoGroup.select(".drivers-list");
         driverG.selectAll("*").remove();
     
-        // Add driver rows
+
         driverG.selectAll("text")
             .data(drivers)
             .enter()
@@ -1074,8 +1043,7 @@ function drawConstructorsPodium() {
 }
 
 
-
-
+// ---------- DRIVERS CHAMPIONSHIP VISUALIZATION ----------
 function drawDriversChampionship() {
   const svg = driversSvg;
   svg.selectAll("*").remove();
@@ -1107,7 +1075,7 @@ function drawDriversChampionship() {
       .range([0, height])
       .padding(0.2);
 
-  // Axes
+
   g.append("g")
       .call(d3.axisLeft(yScale))
       .selectAll("text")
@@ -1119,7 +1087,7 @@ function drawDriversChampionship() {
       .attr("transform", `translate(0, ${height})`)
       .call(d3.axisBottom(xScale));
 
-  // Bars
+
   g.selectAll(".bar")
       .data(driverPoints)
       .enter()
@@ -1135,7 +1103,7 @@ function drawDriversChampionship() {
       .ease(d3.easeCubicOut)
       .attr("width", d => xScale(d.points));
 
-  // Points text
+
   setTimeout(() => {
       g.selectAll(".points-text")
           .data(driverPoints)
@@ -1154,7 +1122,7 @@ function drawDriversChampionship() {
           .attr("opacity", 1);
   }, 1500);
 
-  // Cars (race winners)
+
   const raceWins = d3.rollups(
       allData.filter(d => d.positionOrder === 1),
       v => v.map(d => ({ raceName: d.raceName, constructorName: d.constructorName })),
@@ -1162,15 +1130,13 @@ function drawDriversChampionship() {
   );
 
   raceWins.forEach(([driverName, races]) => {
-      const y = yScale(driverName) + yScale.bandwidth() / 2; // center of bar
+      const y = yScale(driverName) + yScale.bandwidth() / 2;
       const carHeight = 15;
 
       races.forEach((raceObj, idx) => {
-          const xEnd = 10 + idx * 35; // left-aligned spacing
+          const xEnd = 10 + idx * 35;
           const yEnd = y + carHeight + 7;
           
-
-          // Random starting point outside SVG
           const startX = Math.random() * width * 4 + width;
           const startY = Math.random() * height * 30 - height;
 
@@ -1185,7 +1151,7 @@ function drawDriversChampionship() {
               .attr("stroke", "#000")
               .attr("stroke-width", 1)
               .style("cursor", "pointer")
-              .attr("transform", `rotate(0,${startX + 14},${startY + 7})`) // initial rotation
+              .attr("transform", `rotate(0,${startX + 14},${startY + 7})`)
               .on("mouseover", (event) => {
                   tooltip.style("opacity", 1)
                       .style("left", (event.pageX + 12) + "px")
@@ -1198,9 +1164,8 @@ function drawDriversChampionship() {
               })
               .on("mouseout", () => tooltip.style("opacity", 0));
 
-          // Animate along a smooth exaggerated path with rotation
-          const swirlAmplitude = 30; // bigger curves
-          const rotateAmplitude = 260; // rotation in degrees
+          const swirlAmplitude = 30; 
+          const rotateAmplitude = 260; 
 
           car.transition()
               .delay(idx * 400)
@@ -1231,11 +1196,6 @@ function drawDriversChampionship() {
 }
 
 const pitSvg = d3.select("#pitlane-svg");
-// const pitMargin = { top: 50, right: 50, bottom: 50, left: 150 };
-// const pitHeight = +pitSvg.attr("height") - pitMargin.top - pitMargin.bottom;
-// const pitG = pitSvg.append("g").attr("transform", `translate(${pitMargin.left},${pitMargin.top})`);
-
-// Constructors + drivers svg refs
 const constructorsSvg = d3.select("#constructors-svg");
 const driversSvg = d3.select("#drivers-svg");
 
@@ -1251,7 +1211,6 @@ document.querySelectorAll(".feature-card").forEach(card => {
   });
 });
 
-// === Scroll-based F1 title shrink ===
 const titleEl = document.querySelector("#f1-title");
 const subtitleEl = document.querySelector(".f1-subtitle");
 const sectionHeaders = document.querySelectorAll(".section-header");
@@ -1283,9 +1242,8 @@ window.addEventListener("scroll", () => {
         // distance from viewport center
         const distance = Math.abs(headerCenter - windowHeight / 2);
 
-        // scaling factor: 1 when far, maxScale when center
-        const maxDistance = windowHeight - 200; // normalize
-        let factor = 1 - Math.min(distance / maxDistance, 1); // 0..1
+        const maxDistance = windowHeight - 200;
+        let factor = 1 - Math.min(distance / maxDistance, 1);
         const minScale = 3;
         const maxScale = 3.5;
 
