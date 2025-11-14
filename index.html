@@ -16,7 +16,7 @@
     </header>
 
     <main>
-        <div style="height: 200px;"></div>
+        <div style="height: 200px;"> </div>
         <h2 class="scroll-scale section-header" style="text-align: center;"> Explore Race Statistics </h2>
         <div style="height: 200px;"></div>
         <section class="features mt-8 flex justify-center gap-8 flex-wrap">
@@ -43,18 +43,22 @@
                 Analyze team pit stop strategy and timing across the race.
               </p>
             </div>
-            <div style="height: 200px;"></div>
+
         </section>
+
+        <div style="height: 200px;"> </div>
+        
 
         <!-- Podium Section -->
         <section id="podium-section">
-            <h2 class="scroll-scale section-header" data-max="15" data-min="3" style="text-align: center;"> Championship Overview</h2>
+            <h2 class="scroll-scale section-header" data-max="15" data-min="3" style="text-align: center; background-color: transparent;"> Championship Overview</h2>
             <div style="height: 100px;"></div>
             <div class="podium-header">
             <div class="podium-buttons">
                 <button id="show-constructors" class="pill active">Constructors</button>
                 <button id="show-drivers" class="pill">Drivers</button>
             </div>
+            <div style="height: 100px;"></div>
             </div>
         
             <div id="constructors-view" class="podium-view">
@@ -76,10 +80,20 @@
             <div class="controls">
                 <label for="raceSelect">Select Race:</label>
                 <select id="raceSelect"></select>
-                <button id="toggleView">Toggle Grid/Finish</button>
+                <button id="restart">Reset</button>
+                <button id="auto-select">Auto </button>
+                <button id="show-graph" class="pill active">Graph View</button>
+                <button id="show-top5-grid" class="pill">Top 5 View</button>
             </div>
 
+            <div id="graph-view" class="grid-view">
             <svg id="grid-svg" width="1000" height="600"></svg>
+            </div>
+
+            <div id="graph-view" class="grid-view hidden"> 
+            <svg id="top5-svg" width="1000" height="1000"> </svg>
+            </div>
+
         </section>
 
         <div style="height: 200px;"></div>
@@ -89,12 +103,31 @@
             
             <h2 class="scroll-scale section-header" data-max="15" data-min="3" style="text-align: center;"> Pit Stop Visualization</h2>
             <div style="height: 100px;"></div>
-            <svg id="pitlane-svg" width="1000" height="150"></svg>
-            <div id="tooltip" class="tooltip hidden"></div>
+            <h3 style="text-align: center; font-style: italic;"> Select a race from 2024 and click on a team's pit stop station to analyze the results. </h3>
+            <div class="controls">
+                <label for="raceSelect1">Select Race:</label>
+                <select id="raceSelect1"></select>
+            </div>
+            <div style="height: 100px;"></div>
+
+            <div id="pitlane-view" class="pitlane-view">
+            <svg id="pitlane-svg" width="1000" height="500"></svg>
+            </div>
+
+            <div id="team-view" class="pitlane-view hidden">
+                <svg id="team-pit-svg" width="1000" height="600"></svg>
+            </div>
+
+
         </section>
+
+
+
+        <div style="height: 400px;"></div>
+        <h4> Dataset from Kaggle https://www.kaggle.com/datasets/rohanrao/formula-1-world-championship-1950-2020 and Formula 1.</h4>
     </main>
 
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="js/main.js"></script>
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>

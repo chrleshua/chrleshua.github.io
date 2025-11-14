@@ -1,7 +1,11 @@
+import { racecarSVG, pitstopSVG } from './svgTemplates.js';
+
 const svg = d3.select("#grid-svg");
 const width = +svg.attr("width") - 150;
 const height = +svg.attr("height") - 100;
 const margin = { top: 50, right: 50, bottom: 50, left: 150 };
+
+let selectedTeam = null;
 
 const teamColors = {
   "McLaren": "#FF8700",
@@ -9,11 +13,11 @@ const teamColors = {
   "Red Bull": "#1E41FF",
   "Ferrari": "#DC0000",
   "Aston Martin": "#006F62",
-  "Alpine": "#0090FF",
+  "Alpine F1 Team": "#ffb6c1",
   "Williams": "#005AFF",
-  "RB": "#6692FF",
-  "Kick Sauber": "#00E701",
-  "Haas": "#FFFFFF",
+  "RB F1 Team": "#6495ed",
+  "Sauber": "#228b22",
+  "Haas F1 Team": "#a9a9a9",
 };
 
 const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
@@ -64,40 +68,74 @@ d3.csv("data/f1db.csv", d => ({
     .attr("value", d => d)
     .text(d => d);
 
+  const select_pit = d3.select("#raceSelect1");
+    select_pit.selectAll("option")
+      .data(races)
+      .enter()
+      .append("option")
+      .attr("value", d => d)
+      .text(d => d);
+
+
   // initial draw
+
   updateRace(races[0]);
+  updatePit(races[0]);
+
 
   // listeners
   select.on("change", () => updateRace(select.property("value")));
-  d3.select("#toggleView").on("click", () => {
-    currentView = currentView === "finish" ? "grid" : "finish";
-    updateRace(select.property("value"), true);
+  d3.select("#restart").on("click", () => {
+    updateRace(select.property("value"));
   });
+
+  select_pit.on("change", () => updatePit(select_pit).property("value"));
 
   setupPodium(); // sets up buttons and draws constructors by default
 });
 
-// ---------- GRID + PIT (kept nearly identical to working version) ----------
 function updateRace(raceName, skipAnimation = false) {
-  const raceData = allData.filter(d => d.raceName === raceName)
+  const raceData = allData
+    .filter(d => d.raceName === raceName)
     .sort((a, b) => a.grid - b.grid);
 
+  drawGrid(raceData);
+}
+
+function updatePit(raceName) {
+  const raceData = allData
+    .filter(d => d.raceName === raceName)
+    .sort((a, b) => a.grid - b.grid);
+
+  drawPitStops(raceData);
+}
+
+/* ------------------ GRID VISUALIZATION ------------------ */
+function drawGrid(raceData, skipAnimation = false) {
+  // prepare scales / domains
   x.domain([1, d3.max(raceData, d => d.positionOrder)]);
   y.domain(raceData.map(d => d.driverName));
 
-  // clear main group and draw axes + labels
+  // clear previous content
   g.selectAll("*").remove();
+  g.selectAll(".dotted-line").remove();
 
+  // X axis
   g.append("g")
     .attr("transform", `translate(0,${height})`)
-    .call(d3.axisBottom(x).ticks(Math.min(20, d3.max(raceData, d => d.positionOrder))).tickFormat(d3.format("d")))
+    .call(
+      d3.axisBottom(x)
+        .ticks(Math.min(20, d3.max(raceData, d => d.positionOrder)))
+        .tickFormat(d3.format("d"))
+    )
     .append("text")
     .attr("x", width / 2)
     .attr("y", 40)
     .attr("fill", "#fff")
     .attr("text-anchor", "middle")
-    .text(currentView === "finish" ? "Race Finish Position" : "Grid Position");
+    .text("Race Finish Position");
 
+  // Y axis
   g.append("g")
     .call(d3.axisLeft(y))
     .append("text")
@@ -108,24 +146,11 @@ function updateRace(raceName, skipAnimation = false) {
     .attr("text-anchor", "middle")
     .text("Driver");
 
-  // lines (grid -> finish)
-  g.selectAll(".line")
-    .data(raceData)
-    .enter()
-    .append("line")
-    .attr("class", "line")
-    .attr("x1", d => x(d.grid))
-    .attr("y1", d => y(d.driverName) + y.bandwidth() / 2)
-    .attr("x2", d => currentView === "finish" ? x(d.grid) : x(d.positionOrder))
-    .attr("y2", d => y(d.driverName) + y.bandwidth() / 2)
-    .attr("stroke", "#ff0000")
-    .attr("stroke-width", 1)
-    .attr("opacity", 0.5);
+  // grid dots (initial positions)
+  const gridDots = g.selectAll(".gridDot")
+    .data(raceData, d => d.driverId + "_" + d.raceId);
 
-  // original grid small dot
-  g.selectAll(".gridDot")
-    .data(raceData)
-    .enter()
+  gridDots.enter()
     .append("circle")
     .attr("class", "gridDot")
     .attr("cx", d => x(d.grid))
@@ -134,20 +159,24 @@ function updateRace(raceName, skipAnimation = false) {
     .attr("fill", "#fff")
     .attr("opacity", 0.7);
 
-  // animated driver circles
+  // driver circles (start at grid)
   const circles = g.selectAll(".driverCircle")
-    .data(raceData)
-    .enter()
+    .data(raceData, d => d.driverId + "_" + d.raceId);
+
+  const circlesEnter = circles.enter()
     .append("circle")
     .attr("class", "driverCircle")
-    .attr("cx", d => currentView === "finish" ? x(d.grid) : x(d.positionOrder))
+    .attr("cx", d => x(d.grid)) // start at grid
     .attr("cy", d => y(d.driverName) + y.bandwidth() / 2)
     .attr("r", 12)
     .attr("fill", d => teamColors[d.constructorName] || color(d.constructorId))
     .attr("opacity", 0.9)
-    .on("mouseover", (event, d) => {
+    .style("cursor", "pointer")
+    .on("mouseover", function (event, d) {
+      // grow on hover
+      d3.select(this).transition().duration(120).attr("r", 18);
       tooltip.style("opacity", 1)
-        .style("left", (event.pageX + 10) + "px")
+        .style("left", (event.pageX + 20) + "px")
         .style("top", (event.pageY - 28) + "px")
         .html(`<strong>${d.driverName}</strong><br/>
                Constructor: ${d.constructorName}<br/>
@@ -155,63 +184,362 @@ function updateRace(raceName, skipAnimation = false) {
                Pit Stops: ${d.pitStops}<br/>
                Points: ${d.points}`);
     })
-    .on("mouseout", () => tooltip.style("opacity", 0));
+    .on("mousemove", (event) => {
+      tooltip.style("left", (event.pageX + 20) + "px")
+        .style("top", (event.pageY - 28) + "px");
+    })
+    .on("mouseout", function () {
+      d3.select(this).transition().duration(120).attr("r", 12);
+      tooltip.style("opacity", 0);
+    });
+
+  // merge so we have a stable selection if rerendering
+  circlesEnter.merge(circles)
+    .attr("cy", d => y(d.driverName) + y.bandwidth() / 2);
+
+  // Identify top10 names (finish)
+  const top10Names = new Set(raceData.filter(d => d.positionOrder <= 10).map(d => d.driverName));
+
+
 
   if (!skipAnimation) {
-    circles.transition()
-      .duration(5000)
-      .attr("cx", d => currentView === "finish" ? x(d.positionOrder) : x(d.grid))
-      .on("end", function () {
-        const top10 = raceData.filter(d => d.positionOrder <= 10).map(d => d.driverName);
-        d3.select(this)
-          .attr("class", d => top10.includes(d.driverName) ? "top10" : "")
-          .attr("opacity", d => top10.includes(d.driverName) ? 1 : 0.3);
+    // Animate from grid -> finish
+    circlesEnter.merge(circles)
+      .transition()
+      .duration(4000)
+      .ease(d3.easeCubicInOut)
+      .attr("cx", d => x(d.positionOrder))
+      .on("end", function (event, d) {
+        g.selectAll(".dotted-line").remove();
+
+        // add dotted lines for all drivers
+        g.selectAll(".dotted-line")
+          .data(raceData)
+          .enter()
+          .append("line")
+          .attr("class", "dotted-line")
+          .attr("x1", d => x(d.grid))
+          .attr("y1", d => y(d.driverName) + y.bandwidth() / 2)
+          .attr("x2", d => x(d.positionOrder))
+          .attr("y2", d => y(d.driverName) + y.bandwidth() / 2)
+          .attr("stroke", "#fff")
+          .attr("stroke-width", 1.2)
+          .attr("stroke-dasharray", "4,4")
+          .attr("opacity", 0)
+          .lower()
+          .transition()
+          .duration(1000)
+          .attr("opacity", 0.6);
+      
+        // update opacity: top 10 full, bottom 10 half
+        g.selectAll(".driverCircle")
+          .attr("opacity", d => d.positionOrder <= 10 ? 0.95 : 0.5);
       });
+
+
+  } else {
+    // immediate static positions (no animation)
+    circlesEnter.merge(circles)
+      .attr("cx", d => x(d.positionOrder));
+
+    // set opacities immediately
+    g.selectAll(".driverCircle")
+      .attr("opacity", d => top10Names.has(d.driverName) ? 0.95 : 0.5);
+  }
+}
+
+
+
+// assumes pitstopSVG (string), teamColors (map), allData (array) already exist
+function drawPitStops(raceData) {
+  const svg = d3.select("#pitlane-svg");
+  svg.selectAll("*").remove();
+
+  const width = 240 * 11 + 200;
+  const height = +svg.attr("height");
+  svg.attr("width", width);
+
+  // road background
+  svg.append("rect")
+      .attr("x", -100)
+      .attr("y", -100)
+      .attr("width", width+100)
+      .attr("height", height+100)
+      .attr("fill", "#D3D3D3");
+  
+  svg.append("rect")
+      .attr("x", 0)
+      .attr("y", 300)
+      .attr("width", width)
+      .attr("height", height - 300)
+      .attr("fill", "#2a2a2a");
+  
+
+
+  const teamStats = Array.from(
+      d3.rollups(allData, v => d3.sum(v, d => d.points), d => d.constructorName),
+      ([constructorName, points]) => ({ constructorName, points })
+  ).sort((a, b) => d3.descending(a.points, b.points));
+
+  const top10 = new Set(teamStats.slice(0, 10).map(d => d.constructorName));
+
+  const stationWidth = 240;
+  const stationHeight = 200;
+  const startX = 50;
+  const startY = 100;
+  const gap = 40;
+
+  const stations = svg.selectAll(".pitstop-station")
+      .data(teamStats)
+      .enter()
+      .append("g")
+      .attr("class", d => `pitstop-station ${top10.has(d.constructorName) ? "" : "pitstop-dimmed"}`)
+      .attr("transform", (d, i) => `translate(${startX + i * (stationWidth + gap)}, ${startY})`);
+
+  stations.each(function(d) {
+      const g = d3.select(this);
+
+      // Background rect for hover outline
+      g.append("rect")
+          .attr("class", "pitstop-bg")
+          .attr("width", stationWidth)
+          .attr("height", stationHeight)
+          .attr("rx", 6);
+
+      // insert pitstop SVG
+      const foreign = g.append("foreignObject")
+          .attr("width", stationWidth)
+          .attr("height", stationHeight)
+          .attr("x", 0)
+          .attr("y", 0);
+
+      const div = foreign.append("xhtml:div")
+          .html(pitstopSVG);
+
+      const innerSVG = div.select("svg")
+          .attr("width", stationWidth)
+          .attr("height", stationHeight)
+          .node();
+
+      // team name text
+      d3.select(innerSVG)
+          .append("text")
+          .attr("class", "pit-team-name")
+          .attr("x", 300)
+          .attr("y", 60)
+          .attr("font-size", "40px")
+          .attr("font-family", "Formula1-Bold")
+          .attr("fill", teamColors[d.constructorName] || "#fff")
+          .attr("text-anchor", "middle")
+          .attr("dominant-baseline", "middle")
+          .text(d.constructorName);
+
+      // Click action: zoom & switch view
+      g.on("click", function (event, d) {
+        // 1. record team
+        selectedTeam = d.constructorName;
+    
+        // 2. center scroll (your existing code already does this)
+        const container = document.querySelector("#pitlane-view");
+        const stationX = this.getBoundingClientRect().left + container.scrollLeft;
+        const centerX = stationX - container.offsetWidth / 2 + 150;
+        container.scrollTo({ left: centerX, behavior: "smooth" , duration: 500});
+    
+        // 3. zoom into station
+        const station = d3.select(this);
+    
+        station.transition()
+            .duration(500)
+            .on("end", () => {
+                // 4. After zoom -> switch views
+                document.getElementById("pitlane-view").classList.add("hidden");
+                document.getElementById("team-view").classList.remove("hidden");
+    
+                // 5. draw new view
+                drawTeamPitView(selectedTeam, raceData);
+            });
+    });
+    
+  });
+
+  // reset scroll
+  const wrapper = document.querySelector(".pitlane-view");
+  if (wrapper) wrapper.scrollLeft = 0;
+}
+
+
+// Ensure this function is available in the same module scope as your other functions.
+// Expects racecarSVG() to be imported and return a string (either full <svg>...</svg> or inner contents).
+
+function drawTeamPitView(teamName, raceData) {
+  // Record selected team globally (so other code can access)
+  window.__selectedTeamName = teamName;
+
+  const svgSel = d3.select("#team-pit-svg");
+  svgSel.selectAll("*").remove();
+
+  // Container sizes
+  const W = +svgSel.attr("width");
+  const H = +svgSel.attr("height");
+
+  // grey background
+  svgSel.append("rect")
+    .attr("x", 0).attr("y", 0)
+    .attr("width", 1000).
+    attr("height", 800)
+    .attr("fill", "#efefef");
+
+  // small header with team name (left)
+  svgSel.append("text")
+    .attr("x", 20).attr("y", 40)
+    .attr("class", "team-view-title")
+    .style("font-family", "Formula1-Bold")
+    .style("font-size", "28px")
+    .style("fill", teamColors[teamName] || "#000")
+    .text(teamName);
+
+  // Back button area (top-right)
+  // create a group for button to guarantee it exists for event binding
+  const btnGroup = svgSel.append("g")
+    .attr("id", "team-back-btn")
+    .style("cursor", "pointer")
+    .attr("transform", `translate(${W - 140}, 10)`);
+
+  btnGroup.append("rect")
+    .attr("width", 120).attr("height", 36)
+    .attr("rx", 6)
+    .attr("fill", "#111")
+    .attr("stroke", "#333");
+
+  btnGroup.append("text")
+    .attr("x", 60).attr("y", 24)
+    .attr("text-anchor", "middle")
+    .style("fill", "#fff")
+    .style("font-family", "Formula1-Bold")
+    .style("font-size", "12px")
+    .text("Back to Pitlane");
+
+  // click to return to pit lane view
+  btnGroup.on("click", () => {
+    // hide team view and show pitlane view (assumes these are controlled by classes .hidden)
+    d3.select("#team-view").classed("hidden", true);
+    d3.select("#pitlane-view").classed("hidden", false);
+
+    // optional: clear team view svg content
+    // svgSel.selectAll("*").remove();
+
+    // restore focus/scroll to pitlane (optional)
+    const wrapper = document.querySelector(".pitlane-view");
+    if (wrapper) wrapper.scrollLeft = 0;
+  });
+
+  // Find the two drivers for this team for this raceData (raceData should be the selected race's records)
+  // If raceData not provided, attempt to derive from allData (filter the most recent race or first)
+  let drivers = [];
+  if (raceData && Array.isArray(raceData) && raceData.length) {
+    drivers = Array.from(new Map(
+      raceData
+        .filter(d => d.constructorName === teamName)
+        .map(d => [d.driverName, d])
+    ).values());
+  } else {
+    // fallback: take top two drivers from allData for this constructor
+    drivers = Array.from(new Map(
+      allData
+        .filter(d => d.constructorName === teamName)
+        .sort((a,b)=>b.points-a.points)
+        .map(d => [d.driverName, d])
+    ).values()).slice(0,2);
   }
 
-  // PIT LANE (keeps same approach)
-  pitG.selectAll("*").remove();
-  const teams = Array.from(d3.group(raceData, d => d.constructorName),
-    ([constructorName, drivers]) => ({ constructorName, drivers }));
+  // ensure two slots
+  if (drivers.length === 0 && constructorsData) {
+    // try to pick from constructorsData global (if exists)
+  }
+  // Layout: two cars side-by-side centered
+  const carW = 200;    // intrinsic viewBox width in template
+  const carH = 400;    // intrinsic height
+  const desiredH = Math.min(380, H - 140); // scale to fit vertically
+  const scale = desiredH / carH;
+  const spacing = 200;
+  const totalW = (carW * scale) * 2 + spacing;
+  const startX = 200;
+  const yOffset = 100;
 
-  const teamSpacing = 180;
-  const totalWidth = Math.max(teams.length * teamSpacing, 600);
-  // pitSvg.attr("width", totalWidth + pitMargin.left + pitMargin.right);
-  pitSvg.attr("width", 500)
+  // FIRST DRIVER
+  const drv1Data = raceData.find(d => d.driverName === drivers[0].driverName) ?? {};
+  const drv2Data = raceData.find(d => d.driverName === drivers[1].driverName) ?? {};
 
-  const pitLane = pitG.append("g")
-    .attr("class", "pit-lane")
-    .attr("transform", `translate(0,${pitHeight / 2})`);
+  const info1 = {
+    name: drivers[0].driverName,
+    pitStops: drv1Data.pitStops ?? "N/A",
+    fastestLap: drv1Data.fastestLap ?? drv1Data.fastestLapTime ?? "N/A",
+    avgLap: drv1Data.avgLapTime_ms ?? drv1Data.avgLapTime ?? "N/A",
+    finish: drv1Data.positionOrder ?? drv1Data.position ?? "N/A",
+  };
+  const info2 = {
+    name: drivers[1].driverName,
+    pitStops: drv2Data.pitStops ?? "N/A",
+    fastestLap: drv2Data.fastestLap ?? drv2Data.fastestLapTime ?? "DNF (did not",
+    avgLap: drv2Data.avgLapTime_ms ?? drv2Data.avgLapTime ?? "N/A",
+    finish: drv2Data.positionOrder ?? drv2Data.position ?? "N/A",
+  };
 
-  const teamGroups = pitLane.selectAll(".team")
-    .data(teams)
-    .enter()
-    .append("g")
-    .attr("class", "team")
-    .attr("transform", (d, i) => `translate(${i * teamSpacing},0)`)
-    .on("mouseover", (event, d) => {
-      tooltip.style("opacity", 1)
-        .style("left", (event.pageX + 10) + "px")
-        .style("top", (event.pageY - 28) + "px")
-        .html(`<strong>${d.constructorName}</strong><br/>` +
-          d.drivers.map(dr => `${dr.driverName}: ${dr.pitStops} pit stops, avg lap ${Math.round(dr.avgLapTime_ms)} ms`).join("<br/>"));
-    })
-    .on("mouseout", () => tooltip.style("opacity", 0));
+const foreign1 = svgSel.append("foreignObject")
+  .attr("width", carW)
+  .attr("height", carH)
+  .attr("x", startX)
+  .attr("y", yOffset)
+  .on("mouseover", (event) => {
+    tooltip.style("opacity", 0.9)
+      .style("left", (event.pageX + 12) + "px")
+      .style("top", (event.pageY - 28) + "px")
+      .html(`<strong>${info1.name}</strong><br/>
+             Pit stops: ${info1.pitStops}<br/>
+             Fastest lap: ${info1.fastestLap}<br/>
+             Avg lap: ${info1.avgLap}<br/>
+             Final pos: ${info1.finish}`);
+  })
+  .on("mousemove", (event) => {
+    tooltip.style("left", (event.pageX + 12) + "px")
+           .style("top", (event.pageY - 28) + "px");
+  })
+  .on("mouseout", () => tooltip.style("opacity", 0));
 
-  teamGroups.append("rect")
-    .attr("x", -50).attr("y", -30)
-    .attr("width", 100).attr("height", 60)
-    .attr("fill", d => teamColors[d.constructorName] || "#333")
-    .attr("rx", 10).attr("ry", 10)
-    .attr("opacity", 0.95);
+foreign1.append("xhtml:div")
+  .html(racecarSVG(teamColors[teamName] || "#fff"));
 
-  teamGroups.append("text")
-    .text(d => d.constructorName)
-    .attr("y", 5)
-    .attr("text-anchor", "middle")
-    .attr("fill", "#fff")
-    .style("font-weight", "bold");
-}
+const foreign2 = svgSel.append("foreignObject")
+  .attr("width", carW)
+  .attr("height", carH)
+  .attr("x", startX + (carW * scale) + spacing)
+  .attr("y", yOffset)
+  .on("mouseover", (event) => {
+    tooltip.style("opacity", 0.9)
+      .style("left", (event.pageX + 12) + "px")
+      .style("top", (event.pageY - 28) + "px")
+      .html(`<strong>${info2.name}</strong><br/>
+             Pit stops: ${info2.pitStops}<br/>
+             Fastest lap: ${info2.fastestLap}<br/>
+             Avg lap: ${info2.avgLap}<br/>
+             Final pos: ${info2.finish}`);
+  })
+  .on("mousemove", (event) => {
+    tooltip.style("left", (event.pageX + 12) + "px")
+           .style("top", (event.pageY - 28) + "px");
+  })
+  .on("mouseout", () => tooltip.style("opacity", 0));
+
+foreign2.append("xhtml:div")
+  .html(racecarSVG(teamColors[teamName] || "#fff"));
+
+  }
+
+
+
+
+
+
 
 // ---------- PODIUM (Constructors + Drivers) ----------
 // Setup buttons and initial draw
@@ -275,26 +603,33 @@ function drawConstructorsPodium() {
   const fillMap = {};
   constructorsData.forEach((d) => { fillMap[d.constructorName] = teamColors[d.constructorName] || "#fff"; });
 
-  // --- Info Panel BELOW bars ---
-  let infoEl = d3.select("#constructors-info-below");
-  if (infoEl.empty()) {
-    infoEl = d3.select(svg.node().parentNode)
-      .append("div")
-      .attr("id", "constructors-info-below")
-      .style("width", "100%")
-      .style("text-align", "center")
-      .style("color", "#fff")
-      .style("font-family", "Formula1-Regular")
-      .style("margin-top", "20px")
-      .style("transition", "opacity 0.3s ease")
-      .html(`<div style="font-family:Formula1-Bold;font-size:24px;"></div>`);
-  }
-
   const n = indexOrder.length;
   const totalWidth = n * baseBarWidth + (n - 1) * gap;
-  const startX = centerX - totalWidth / 2;
+  const startX = (centerX) - totalWidth / 2;
 
   const groups = [];
+
+  // --- Info Panel BELOW bars ---
+  let infoGroup = svg.select("g#info-panel");
+  if (infoGroup.empty()) {
+      infoGroup = svg.append("g")
+          .attr("id", "info-panel")
+          .attr("transform", `translate(${svgWidth - 350}, 50)`); // position right side
+  
+      infoGroup.append("text").attr("class", "team-name")
+          .attr("y", 0)
+          .style("font-family", "Formula1-Bold").style("font-size", "60px")
+          .style("fill", "#fff");
+  
+      infoGroup.append("text").attr("class", "placement")
+          .attr("y", 60).style("font-size", "30px").style("fill", "#fff");
+  
+      infoGroup.append("text").attr("class", "total-points")
+          .attr("y", 100).style("font-size", "30px").style("fill", "#fff");
+  
+      infoGroup.append("g").attr("class", "drivers-list")
+          .attr("transform", "translate(0, 120)");
+  }
 
   indexOrder.forEach((top5Index, posIdx) => {
     const team = constructorsData[top5Index];
@@ -302,7 +637,7 @@ function drawConstructorsPodium() {
 
     const ordinal = top5Index + 1;
     const barH = heights[ordinal] || 140;
-    const xPos = startX + posIdx * (baseBarWidth + gap);
+    const xPos = startX - 200 + posIdx * (baseBarWidth + gap);
 
     const g = svg.append("g")
       .attr("class", `podium-bar ordinal-${ordinal}`)
@@ -331,16 +666,6 @@ function drawConstructorsPodium() {
       .text(`#${ordinal}`);
 
     g.append("text")
-      .attr("class", "team-label")
-      .attr("x", baseBarWidth / 2)
-      .attr("y", 20)
-      .attr("text-anchor", "middle")
-      .style("font-family", "Formula1-Bold")
-      .style("font-size", "14px")
-      .style("fill", fillMap[team.constructorName] || "#fff")
-      .text(team.constructorName);
-
-    g.append("text")
       .attr("class", "podium-pts")
       .attr("x", baseBarWidth / 2)
       .attr("y", -barH - 10)
@@ -349,52 +674,79 @@ function drawConstructorsPodium() {
       .style("font-size", "12px")
       .style("fill", "#fff")
       .text(`${team.points} pts`);
+    
+    g.append("text")
+      .attr("class", "team-name")
+      .attr("x", baseBarWidth / 2)
+      .attr("y", 30)
+      .attr("text-anchor", "middle")
+      .attr("fill", fillMap[team.constructorName] || "transparent")
+      .style("font-family", "Formula1-Bold")
+      .style("font-size", "18px")
+      .text(`${team.constructorName}`);
+  
 
-    g.on("mouseover", (event) => {
-      const focusedScaleX = 1.4;
-      const focusedScaleY = 1.2;
+      g.on("mouseover", (event) => {
+        const focusedScaleX = 1.4;
+        const focusedScaleY = 1.2;
+      
+        const widths = indexOrder.map((_, i) => (i === posIdx ? baseBarWidth * focusedScaleX : baseBarWidth));
+        const newTotalWidth = widths.reduce((a, b) => a + b, 0) + (widths.length - 1) * gap;
+        const newStartX = centerX - 200 - newTotalWidth / 2;
+      
+        groups.forEach((obj, i) => {
+          const targetX = newStartX + widths.slice(0, i).reduce((a, b) => a + b, 0) + i * gap;
+          const isFocused = (i === posIdx);
+          const sX = isFocused ? focusedScaleX : 1;
+          const sY = isFocused ? focusedScaleY : 1;
+          obj.g.transition().duration(150)
+            .attr("transform", `translate(${targetX}, ${baseY}) scale(${sX}, ${sY})`);
+          obj.x = targetX;
+        });
+      
 
-      const widths = indexOrder.map((_, i) => (i === posIdx ? baseBarWidth * focusedScaleX : baseBarWidth));
-      const newTotalWidth = widths.reduce((a, b) => a + b, 0) + (widths.length - 1) * gap;
-      const newStartX = centerX - newTotalWidth / 2;
+        const team = constructorsData[top5Index];
+        const drivers = Array.from(
+            d3.rollups(
+                allData.filter(d => d.constructorName === team.constructorName),
+                v => d3.sum(v, d => d.points),
+                d => d.driverName
+            ),
+            ([driverName, pts]) => ({ driverName, pts })
+        ).sort((a, b) => d3.descending(a.pts, b.pts));
+    
+        infoGroup.select(".team-name")
+            .text(team.constructorName)
+            .style("fill", fillMap[team.constructorName] || "#fff");
+    
+        infoGroup.select(".placement")
+        .text(`Placement: #${top5Index}`)
+        .style("font-size", "30px");
 
-      groups.forEach((obj, i) => {
-        const targetX = newStartX + widths.slice(0, i).reduce((a, b) => a + b, 0) + i * gap;
-        const isFocused = (i === posIdx);
-        const sX = isFocused ? focusedScaleX : 1;
-        const sY = isFocused ? focusedScaleY : 1;
-        obj.g.transition().duration(150)
-          .attr("transform", `translate(${targetX}, ${baseY}) scale(${sX}, ${sY})`);
-        obj.x = targetX;
-      });
-
-      // Update centered info below
-      const hoveredTeam = constructorsData[top5Index];
-      const driverAgg = Array.from(
-        d3.rollups(
-          allData.filter(d => d.constructorName === hoveredTeam.constructorName),
-          v => d3.sum(v, d => d.points),
-          d => d.driverName
-        ),
-        ([driverName, pts]) => ({ driverName, pts })
-      ).sort((a, b) => d3.descending(a.pts, b.pts));
-
-      const driversHTML = driverAgg.map(d => `<div style="margin:6px 0;"><strong>${d.driverName}</strong> — ${d.pts} pts</div>`).join("");
-
-      infoEl.html(`
-          <div style="font-family:Formula1-Bold;font-size:22px;color:${fillMap[hoveredTeam.constructorName] || '#fff'};margin-bottom:6px;">
-              ${hoveredTeam.constructorName}
-          </div>
-          <div style="font-size:14px;margin-bottom:4px;">Placement: <strong>#${idx+1}</strong></div>
-          <div style="font-size:14px;margin-bottom:8px;">Total points: <strong>${hoveredTeam.points}</strong></div>
-          <div style="font-size:13px;">${driversHTML}</div>
-      `).style("opacity",1);
+        infoGroup.select(".total-points")
+        .text(`Total points: ${team.points}`)
+        .style("font-size", "30px");
+    
+        // Clear old drivers
+        const driverG = infoGroup.select(".drivers-list");
+        driverG.selectAll("*").remove();
+    
+        // Add driver rows
+        driverG.selectAll("text")
+            .data(drivers)
+            .enter()
+            .append("text")
+            .attr("y", (d, i) => i * 30 + 20)
+            .style("font-size", "25px")
+            .style("fill", "#fff")
+            .text(d => `${d.driverName} — ${d.pts} pts`);
     });
+      
 
     g.on("mouseout", () => {
       const widths = indexOrder.map(() => baseBarWidth);
       const totalW = widths.reduce((a, b) => a + b, 0) + (widths.length - 1) * gap;
-      const newStartX = centerX - totalW / 2;
+      const newStartX = (centerX - 200) - totalW / 2;
 
       groups.forEach((obj, i) => {
         const targetX = newStartX + i * (baseBarWidth + gap);
@@ -403,8 +755,7 @@ function drawConstructorsPodium() {
         obj.x = targetX;
       });
 
-      // Reset info text
-      infoEl.html(`<div style="font-family:Formula1-Bold;font-size:24px;">Constructor Championship Podium</div>`);
+      
     });
 
     groups.push({ g, x: xPos, idx: top5Index });
@@ -574,9 +925,9 @@ function drawDriversChampionship() {
 }
 
 const pitSvg = d3.select("#pitlane-svg");
-const pitMargin = { top: 50, right: 50, bottom: 50, left: 150 };
-const pitHeight = +pitSvg.attr("height") - pitMargin.top - pitMargin.bottom;
-const pitG = pitSvg.append("g").attr("transform", `translate(${pitMargin.left},${pitMargin.top})`);
+// const pitMargin = { top: 50, right: 50, bottom: 50, left: 150 };
+// const pitHeight = +pitSvg.attr("height") - pitMargin.top - pitMargin.bottom;
+// const pitG = pitSvg.append("g").attr("transform", `translate(${pitMargin.left},${pitMargin.top})`);
 
 // Constructors + drivers svg refs
 const constructorsSvg = d3.select("#constructors-svg");
@@ -627,9 +978,9 @@ window.addEventListener("scroll", () => {
         const distance = Math.abs(headerCenter - windowHeight / 2);
 
         // scaling factor: 1 when far, maxScale when center
-        const maxDistance = windowHeight; // normalize
+        const maxDistance = windowHeight - 200; // normalize
         let factor = 1 - Math.min(distance / maxDistance, 1); // 0..1
-        const minScale = 2;
+        const minScale = 3;
         const maxScale = 3.5;
 
         const scale = minScale + factor * (maxScale - minScale);
